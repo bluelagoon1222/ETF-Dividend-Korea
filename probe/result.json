@@ -1,1 +1,67 @@
-{"status":"not run yet"}
+{
+ "run_at_utc": "2026-10-26T06:19:48",
+ "results": [
+  {
+   "status": 200,
+   "sec": 0.89,
+   "name": "seibro_page",
+   "ok": true
+  },
+  {
+   "status": 200,
+   "sec": 0.22,
+   "rows": 0,
+   "list_cnt": 3551,
+   "bytes": 240,
+   "sample": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\n\n<result beforeServletCall=\"1792995579188\" result=\"1\" next=\"false\" beforeEJBCall=\"1792995579191\" afterServletCall=\"1792995579259\" afterEJBCall=\"1792995579258\">\n    <LIST_CNT value=\"3551\"/>\n</result>\n",
+   "name": "seibro_count",
+   "ok": true
+  },
+  {
+   "status": 200,
+   "sec": 0.81,
+   "rows": 0,
+   "list_cnt": null,
+   "bytes": 15217,
+   "sample": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\n\n<vector beforeServletCall=\"1792995580411\" beforeEJBCall=\"1792995580416\" afterServletCall=\"1792995581078\" afterEJBCall=\"1792995581077\" result=\"30\">\n    <data vectorkey=\"0\" type=\"Document\">\n        <result><ISIN value=\"KR70086C0007\"/><KOR_SECN_NM value=\"TIGER 리츠부동산인프라10채권혼합액티브\"/><ETF_SORT_CD value=\"Z0101\"/><ISSUCO_CUSTNO value=\"263629\"/><RGT_STD_DT value=\"20",
+   "name": "seibro_page30",
+   "ok": false
+  },
+  {
+   "status": 200,
+   "sec": 0.79,
+   "rows": 0,
+   "list_cnt": null,
+   "bytes": 15217,
+   "sample": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\n\n<vector beforeServletCall=\"1792995582222\" beforeEJBCall=\"1792995582225\" afterServletCall=\"1792995582861\" afterEJBCall=\"1792995582860\" result=\"30\">\n    <data vectorkey=\"0\" type=\"Document\">\n        <result><ISIN value=\"KR70086C0007\"/><KOR_SECN_NM value=\"TIGER 리츠부동산인프라10채권혼합액티브\"/><ETF_SORT_CD value=\"Z0101\"/><ISSUCO_CUSTNO value=\"263629\"/><RGT_STD_DT value=\"20",
+   "name": "seibro_bulk5000",
+   "ok": false
+  },
+  {
+   "status": 200,
+   "sec": 0.64,
+   "rows": 20,
+   "with_tax": 20,
+   "sample": "[{\"fid\": \"2ETF01\", \"divPrevDt\": \"20260729\", \"divDt\": \"20260730\", \"payGijunDt\": \"20260731\", \"payDt\": \"20260804\", \"divAmt\": 183, \"taxDivAmt\": 168, \"divRt\": 0.2046}, {\"fid\": \"2ETF01\", \"divPrevDt\": \"20260428\", \"divDt\": \"20260429\", \"payGijunDt\": \"20260430\", \"payDt\": \"20260506\", \"divAmt\": 446, \"taxDivAmt\": 446, \"divRt\": 0.4449}]",
+   "name": "funetf_divBasic_KR7069500007",
+   "ok": true
+  },
+  {
+   "status": 200,
+   "sec": 0.24,
+   "rows": 20,
+   "with_tax": 0,
+   "sample": "[{\"fid\": null, \"divPrevDt\": \"20260729\", \"divDt\": \"20260730\", \"payGijunDt\": \"20260731\", \"payDt\": \"20260804\", \"divAmt\": 133, \"taxDivAmt\": null, \"divRt\": 0.149}, {\"fid\": null, \"divPrevDt\": \"20260428\", \"divDt\": \"20260429\", \"payGijunDt\": \"20260430\", \"payDt\": \"20260506\", \"divAmt\": 450, \"taxDivAmt\": null, \"divRt\": 0.4487}]",
+   "name": "funetf_divBasic_KR7102110004",
+   "ok": true
+  },
+  {
+   "status": 200,
+   "sec": 1.19,
+   "rows": 1183,
+   "sample": "[{\"itemcode\": \"069500\", \"etfTabCode\": 1, \"itemname\": \"KODEX 200\", \"nowVal\": 86185, \"risefall\": \"5\", \"changeVal\": -890, \"changeRate\": -1.02, \"nav\": 86174.0, \"threeMonthEarnRate\": -22.9443, \"quant\": 24192588, \"amonut\": 2095903, \"marketSum\": 215419}]",
+   "name": "naver_etf_list",
+   "ok": true
+  }
+ ]
+}
