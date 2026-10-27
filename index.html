@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ETF 분배금 계산기 — 국내 상장 ETF 12개월 분배금·과표</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230B2D5B'/><circle cx='50' cy='52' r='26' fill='none' stroke='%23F37321' stroke-width='9'/><text x='50' y='63' font-size='30' font-weight='800' font-family='Arial' fill='%23F37321' text-anchor='middle'>₩</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,67 +11,97 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
 <style>
 :root{
-  --orange:#F37321; --orange-soft:#FDE6D5; --navy:#0B2D5B; --navy-soft:#DCE5F2;
+  --orange:#F37321; --orange-soft:#FDE6D5; --orange-ink:#A3460B; --navy:#0B2D5B; --navy-soft:#DCE5F2;
   --ink:#1B2230; --sub:#5B6475; --line:#E3E6EB; --band:#F4F6F9; --bg:#FFFFFF;
+  --font:"Nanum Gothic","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--ink);
-  font-family:"Nanum Gothic","Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:17px;line-height:1.55}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.55;
+  word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  -webkit-text-size-adjust:100%}
 button,input,select{font:inherit;color:inherit}
+.num,td,.v,.r,input{font-variant-numeric:tabular-nums}
 :focus-visible{outline:3px solid var(--orange);outline-offset:2px}
 .wrap{max-width:1280px;margin:0 auto;padding:0 24px}
 header{background:var(--navy);color:#fff;padding:26px 0 22px;border-bottom:4px solid var(--orange)}
-header h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-.5px}
+header h1{margin:0;font-size:30px;font-weight:800}
 header p{margin:4px 0 0;color:#C9D6EA;font-size:16px}
 .meta{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:12px;font-size:14px;color:#C9D6EA}
 .meta b{color:#fff}
 
-/* step 1: amount bar */
-.amount{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;padding:20px 0;border-bottom:1px solid var(--line)}
+.amount{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;padding:20px 0;border-bottom:1px solid var(--line)}
 .amount label{font-weight:800;color:var(--navy);font-size:19px}
-.step{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;
+.step{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;flex:none;
   background:var(--orange);color:#fff;font-weight:800;font-size:15px;margin-right:8px;vertical-align:2px}
 .amt-input{display:flex;align-items:center;border:2px solid var(--navy);border-radius:6px;background:#fff}
-.amt-input input{border:0;outline:0;padding:10px 12px;width:240px;font-size:24px;font-weight:800;text-align:right}
+.amt-input input{border:0;outline:0;padding:10px 12px;width:240px;font-size:24px;font-weight:800;text-align:right;min-width:0}
 .amt-input span{padding:0 14px 0 4px;font-weight:700;color:var(--sub)}
-.amt-hint{color:var(--sub);font-size:15px;min-width:160px}
+.amt-hint{color:var(--sub);font-size:16px;font-weight:700}
 .quick{display:flex;gap:6px;flex-wrap:wrap}
-.qbtn{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;cursor:pointer;font-size:14px}
+.qbtn{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;cursor:pointer;font-size:15px}
 .qbtn:hover{border-color:var(--orange)}
 
-/* layout */
 .grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:22px;align-items:start;padding-top:20px}
 h2{margin:0 0 6px;font-size:22px;font-weight:800;color:var(--navy)}
-.lead{margin:0 0 14px;color:var(--sub);font-size:15px}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
-.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:15px}
-.chip[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:700}
-.chip.sort[aria-pressed="true"]{background:var(--orange);border-color:var(--orange)}
-.tools{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:12px}
-.search{border:1.5px solid var(--line);border-radius:6px;padding:8px 12px;width:260px}
-.check{display:flex;align-items:center;gap:6px;font-size:15px;color:var(--sub);cursor:pointer}
+.lead{margin:0 0 12px;color:var(--sub);font-size:15px}
+
+/* return-definition banner */
+.retnote{display:flex;gap:10px;align-items:flex-start;border:2px solid var(--orange);background:#FFF6EF;border-radius:8px;
+  padding:12px 16px;margin:4px 0 14px;font-size:16px}
+.retnote .ic{flex:none;width:24px;height:24px;border-radius:50%;background:var(--orange);color:#fff;font-weight:800;
+  display:flex;align-items:center;justify-content:center;font-size:15px;margin-top:1px}
+.retnote b{color:var(--orange-ink)}
+
+/* filters */
+.fgroup{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}
+.flabel{font-size:14px;font-weight:800;color:var(--navy);min-width:64px}
+.fhelp{font-size:13px;color:var(--sub)}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:15px;white-space:nowrap}
+.chip.sort[aria-pressed="true"]{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:700}
+.chip.ms[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:700}
+.chip.tri[data-s="in"]{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:700}
+.chip.tri[data-s="in"]::before{content:"✓ "}
+.chip.tri[data-s="out"]{background:#fff;border-color:var(--orange);color:var(--orange-ink);font-weight:700;text-decoration:line-through}
+.chip.tri[data-s="out"]::before{content:"✕ ";text-decoration:none;display:inline-block}
+.chip.reset{border-style:dashed;color:var(--sub)}
+.search{border:1.5px solid var(--line);border-radius:6px;padding:8px 12px;width:260px;max-width:100%}
+
+/* desktop table */
 .tbl-wrap{overflow-x:auto;border-top:2px solid var(--navy)}
 table{border-collapse:collapse;width:100%}
-th,td{padding:10px 9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
 th{font-size:13.5px;color:var(--sub);background:var(--band);font-weight:700}
 th.l,td.l{text-align:left}
+th .hl{color:var(--orange-ink)}
 #etfTable{min-width:820px}
-#etfTable th,#etfTable td{padding:9px 7px}
 #etfTable tbody tr{cursor:pointer}
 #etfTable tbody tr:hover{background:#FFF4EC}
 #etfTable tbody tr.sel{background:#FFF0E4}
-.rank{color:var(--sub);font-size:14px;width:34px}
+.rank{color:var(--sub);font-size:14px;width:30px}
 .nm{font-weight:800;font-size:16px;white-space:normal;min-width:200px;max-width:280px}
 .nm small{display:block;font-weight:400;font-size:12.5px;color:var(--sub)}
-.tag{display:inline-block;font-size:11.5px;font-weight:700;border-radius:3px;padding:0 5px;margin-left:4px;vertical-align:2px}
-.tag.cc{background:var(--orange-soft);color:#A3460B}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;border-radius:3px;padding:0 5px;margin-left:4px;vertical-align:2px;white-space:nowrap}
+.tag.cc{background:var(--orange-soft);color:var(--orange-ink)}
 .tag.new{background:var(--band);color:var(--sub);border:1px solid var(--line)}
 .yld{font-weight:800;font-size:17px;color:var(--orange)}
 .up{color:var(--orange);font-weight:700}
 .dn{color:var(--navy);font-weight:700}
-.na{color:#A3ACBB}
-.addbox{width:22px;height:22px;border:2px solid var(--line);border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;color:#fff}
-tr.sel .addbox{background:var(--orange);border-color:var(--orange)}
+.na{color:#98A2B3}
+.addbox{width:22px;height:22px;border:2px solid #C7CDD6;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:14px}
+.sel .addbox{background:var(--orange);border-color:var(--orange)}
+
+/* mobile cards (hidden on desktop) */
+#etfCards{display:none}
+.ecard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#fff;cursor:pointer}
+.ecard.sel{border:2px solid var(--orange);background:#FFF8F2}
+.ecard .top{display:flex;gap:10px;align-items:flex-start}
+.ecard .t{flex:1;font-weight:800;font-size:16px;line-height:1.35}
+.ecard .t small{display:block;font-weight:400;font-size:12.5px;color:var(--sub);margin-top:2px}
+.ecard .mx{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.ecard .mx div{background:var(--band);border-radius:6px;padding:6px 8px}
+.ecard .mx span{display:block;font-size:12px;color:var(--sub)}
+.ecard .mx b{font-size:17px}
+.ecard .ft2{display:flex;justify-content:space-between;font-size:13px;color:var(--sub);margin-top:8px}
 
 /* side panel */
 aside{position:sticky;top:12px;border:1px solid var(--line);border-radius:8px;background:#fff}
@@ -79,60 +109,202 @@ aside .hd{padding:16px 18px 10px;border-bottom:1px solid var(--line)}
 aside .bd{padding:6px 18px 12px;max-height:52vh;overflow:auto}
 aside .ft{padding:14px 18px 18px;border-top:1px solid var(--line);background:var(--band);border-radius:0 0 8px 8px}
 .empty-sel{color:var(--sub);font-size:15px;padding:18px 0}
-.srow{display:grid;grid-template-columns:1fr 78px 26px;gap:8px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line)}
-.srow .n{font-weight:700;font-size:14.5px;line-height:1.3}
-.srow .n small{display:block;font-weight:400;color:var(--sub);font-size:12px}
+.srow{display:grid;grid-template-columns:1fr 84px 28px;gap:8px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line)}
+.srow .n{font-weight:700;font-size:14.5px;line-height:1.35}
+.srow .n small{display:block;font-weight:400;color:var(--sub);font-size:12.5px}
 .pct{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:5px;background:#fff}
-.pct input{width:52px;border:0;outline:0;text-align:right;padding:6px 2px 6px 6px;font-weight:800;font-size:16px}
+.pct input{width:56px;border:0;outline:0;text-align:right;padding:7px 2px 7px 6px;font-weight:800;font-size:16px}
 .pct span{color:var(--sub);font-size:13px;padding-right:6px}
-.rm{border:0;background:none;color:#A3ACBB;font-size:20px;cursor:pointer;line-height:1}
-.rm:hover{color:var(--ink)}
+.rm{border:0;background:none;color:#98A2B3;font-size:22px;cursor:pointer;line-height:1}
 .sum{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:10px}
-.sum .bad{color:var(--orange)}
+.sum .bad{color:var(--orange-ink)}
 .btnrow{display:flex;gap:8px}
 .btn{border:0;border-radius:6px;padding:12px 16px;font-weight:800;cursor:pointer}
 .btn.sec{background:#fff;border:1.5px solid var(--line);font-size:14px;padding:10px 12px}
 .btn.pri{background:var(--orange);color:#fff;font-size:18px;flex:1}
 .btn.pri:disabled{background:#F7B48A;cursor:not-allowed}
-.msg{font-size:13.5px;color:var(--orange);margin-top:8px;min-height:1em}
+.taxsel{display:block;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px}
+.taxsel select{display:block;width:100%;margin-top:4px;border:1.5px solid var(--line);border-radius:6px;padding:7px 8px;font-size:14px;background:#fff}
+.est{color:var(--navy);font-weight:700;border-bottom:1px dotted var(--navy)}
+.msg{font-size:13.5px;color:var(--orange-ink);margin-top:8px;min-height:1em}
+
+/* mobile bottom bar */
+.mbar{display:none}
 
 /* results */
 #result{padding:36px 0 10px}
 .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:14px 0 18px}
 .card{border:1px solid var(--line);border-radius:8px;padding:16px 18px;background:#fff}
-.card .k{font-size:14px;color:var(--sub);font-weight:700}
-.card .v{font-size:27px;font-weight:800;margin-top:4px;letter-spacing:-.5px}
-.card .s{font-size:13px;color:var(--sub);margin-top:2px}
+.card .k{font-size:15px;color:var(--sub);font-weight:700}
+.card .v{font-size:28px;font-weight:800;margin-top:4px;line-height:1.2}
+.card .r{font-size:22px;font-weight:800;margin-top:6px;line-height:1.2}
+.card .r small{font-size:14px;font-weight:700;color:var(--sub);margin-left:4px}
+.card .s{font-size:14px;color:var(--sub);margin-top:6px}
 .card.hl{border:2px solid var(--orange)}
-.card.hl .v{color:var(--orange)}
+.card.hl .v,.card.hl .r{color:var(--orange)}
 .lbl{display:inline-block;font-size:11.5px;font-weight:700;border-radius:3px;padding:1px 6px;margin-left:4px;vertical-align:2px}
-.lbl.f{background:var(--navy-soft);color:var(--navy)}
-.lbl.e{background:var(--orange-soft);color:#A3460B}
+.lbl.e{background:var(--orange-soft);color:var(--orange-ink)}
 .gauge{border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:22px}
 .gauge .bar{position:relative;height:18px;background:var(--band);margin:12px 0 6px}
 .gauge .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--navy)}
 .gauge .bar .line{position:absolute;top:-6px;bottom:-6px;width:3px;background:var(--orange)}
-.gauge .lg{display:flex;justify-content:space-between;font-size:13.5px;color:var(--sub)}
+.gauge .lg{display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:space-between;font-size:15px;color:var(--sub)}
 .chartbox{position:relative;height:340px;border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:22px}
 .month-h td{background:var(--band);font-weight:800;color:var(--navy);text-align:left}
 .month-h td .mt{float:right;color:var(--ink)}
-.basis{font-size:12.5px;border-radius:3px;padding:1px 6px}
+.basis{font-size:12.5px;border-radius:3px;padding:1px 6px;white-space:nowrap}
 .basis.a{background:var(--navy-soft);color:var(--navy)}
-.basis.p{background:var(--orange-soft);color:#A3460B}
+.basis.p{background:var(--orange-soft);color:var(--orange-ink)}
+.basis.c{background:#EEF0F3;color:var(--sub)}
+.mname{display:none}
 .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:0}
-.notes{margin-top:28px;font-size:14.5px;color:var(--ink)}
+.notes{margin-top:28px;font-size:15px}
 .notes dl{display:grid;grid-template-columns:190px 1fr;gap:8px 16px;margin:0}
 .notes dt{font-weight:800;color:var(--navy)}
 .notes dd{margin:0}
 footer{margin-top:40px;padding:22px 0 36px;background:var(--band);font-size:13.5px;color:var(--sub)}
 .loading{padding:50px;text-align:center;color:var(--sub)}
+
 @media (max-width:980px){
   .grid{grid-template-columns:1fr}
   aside{position:static}
   .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .notes dl{grid-template-columns:1fr}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:760px){
+  body{font-size:16px}
+  .wrap{padding:0 14px}
+  header{padding:18px 0 16px}
+  header h1{font-size:24px}
+  header p{font-size:14.5px}
+  .meta{font-size:12.5px;gap:2px 12px}
+  .amount{gap:10px}
+  .amount label{width:100%}
+  .amt-input{flex:1 1 100%}
+  .amt-input input{width:100%;font-size:22px}
+  .quick{width:100%}
+  .qbtn{flex:1;text-align:center;padding:8px 4px}
+  .retnote{font-size:14.5px;padding:10px 12px}
+  .flabel{width:100%;min-width:0}
+  .fgroup{gap:6px}
+  .chip{font-size:14px;padding:6px 12px}
+  .search{width:100%}
+  #etfTableWrap{display:none}
+  #etfCards{display:block}
+  .cards{gap:10px}
+  .card{padding:12px 14px}
+  .card .v{font-size:23px}
+  .card .r{font-size:19px}
+  .card .s{font-size:12.5px}
+  .chartbox{height:280px;padding:8px}
+  .notes dl{grid-template-columns:1fr;gap:2px 0}
+  .notes dd{margin-bottom:10px}
+  /* result tables -> stacked rows */
+  .rt thead{display:none}
+  .rt, .rt tbody, .rt tr, .rt td{display:block;width:100%}
+  .rt{min-width:0!important}
+  .rt tr{border-bottom:1px solid var(--line);padding:8px 2px;display:grid;grid-template-columns:1fr 1fr;column-gap:14px}
+  .rt td{border:0;padding:3px 2px;display:flex;justify-content:space-between;gap:8px;text-align:right;white-space:normal;font-size:14.5px}
+  .rt td.first{grid-column:1 / -1}
+  .rt td[data-label="일정 근거"],.rt td[data-label="과표 근거"]{grid-column:1 / -1}
+  .rt td::before{content:attr(data-label);color:var(--sub);font-size:13px;text-align:left;flex:none}
+  .rt td.first{font-weight:800;font-size:16px;justify-content:flex-start}
+  .rt td.first::before{display:none}
+  .rt td.hide-m{display:none}
+  .rt .mname{display:inline}
+  .rt tr.month-h{padding:0;border:0}
+  .rt tr.month-h{display:block}
+  .rt tr.month-h td{display:flex;justify-content:space-between;padding:10px 8px;grid-column:auto}
+  .rt tr.month-h td .mt{float:none}
+  .rt tr.month-h td::before{display:none}
+  .mbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;gap:10px;align-items:center;
+    background:#fff;border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));
+    box-shadow:0 -4px 14px rgba(11,45,91,.08)}
+  .mbar .info{flex:1;font-size:14px;line-height:1.3}
+  .mbar .info b{font-size:16px}
+  .mbar .btn.pri{flex:none;font-size:16px;padding:11px 18px}
+  .mbar .btn.sec{flex:none}
+  body{padding-bottom:78px}
+}
+
+/* result header, conditions, actions */
+.rhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.actions{display:flex;gap:8px}
+.btn.act{background:var(--navy);color:#fff;font-size:15px;padding:10px 16px}
+.btn.act.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
+.actions2{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:10px 0 14px}
+.actions2 input:not([type=checkbox]){border:1.5px solid var(--line);border-radius:6px;padding:7px 10px;font-size:14px;width:200px}
+.check{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--sub);cursor:pointer}
+.sharednote{border-left:4px solid var(--navy);background:var(--navy-soft);padding:10px 14px;font-size:14.5px;margin-bottom:12px}
+.cond{display:grid;grid-template-columns:300px 1fr;gap:18px;border:2px solid var(--navy);border-radius:10px;padding:16px 20px;margin-bottom:12px;background:#fff}
+.principal{display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--line);padding-right:18px}
+.principal .k{font-size:15px;font-weight:800;color:var(--navy)}
+.principal .v{font-size:34px;font-weight:800;line-height:1.15;color:var(--navy)}
+.principal .s{font-size:15px;color:var(--sub);font-weight:700}
+.cinfo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 18px;margin:0;align-content:center}
+.cinfo div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding:4px 0}
+.cinfo dt{color:var(--sub);font-size:14.5px}
+.cinfo dd{margin:0;font-weight:800;font-size:16px}
+table.comp td,table.comp th{padding:8px 8px}
+tr.tot td{background:var(--band);border-top:2px solid var(--line)}
+.two{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;align-items:start}
+.two h3,.detail summary{font-size:18px;font-weight:800;color:var(--navy);margin:0 0 8px}
+.msum td,.msum th{padding:7px 8px;font-size:14.5px}
+.msum .dot{margin-right:3px}
+.detail{margin-top:20px}
+.detail summary{cursor:pointer}
+#mchartImg{display:none;width:100%}
+.print-head,.print-foot{display:none}
+@media (max-width:760px){
+  .rhead .actions{width:100%}
+  .rhead .btn.act{flex:1}
+  .actions2 input:not([type=checkbox]){width:100%}
+  .cond{grid-template-columns:1fr;padding:14px}
+  .principal{border-right:0;border-bottom:1px solid var(--line);padding:0 0 10px}
+  .principal .v{font-size:30px}
+  .cinfo{grid-template-columns:1fr}
+  .two{grid-template-columns:1fr}
+  table.comp tr.tot{background:var(--band)}
+}
+@media print{
+  @page{size:A4;margin:9mm 9mm}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  html,body{font-size:10.5pt;background:#fff}
+  body{padding:0!important}
+  header,.amount,.grid,.notes,.mbar,footer,.actions,.actions2,.rhead,.sharednote{display:none!important}
+  .wrap{max-width:none;padding:0}
+  #result{padding:0}
+  .print-head{display:block;border-bottom:3px solid var(--orange);padding-bottom:6px;margin-bottom:10px}
+  .print-head .ph-t{font-size:18pt;font-weight:800;color:var(--navy)}
+  .print-head .ph-m{font-size:9.5pt;color:var(--sub)}
+  .print-foot{display:block;font-size:7.8pt;line-height:1.4;color:var(--sub);border-top:1px solid var(--line);padding-top:6px;margin-top:10px;break-inside:avoid}
+  .cond{grid-template-columns:230px 1fr;padding:10px 14px;margin-bottom:8px}
+  .principal .v{font-size:22pt}
+  .tbl-wrap{overflow:visible}
+  table{min-width:0!important;font-size:9pt}
+  th,td{padding:4px 6px!important;white-space:normal}
+  .rt thead{display:table-header-group}
+  .cards{grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}
+  .card{padding:8px 10px;break-inside:avoid}
+  .card .v{font-size:15pt}.card .r{font-size:12pt}.card .s{font-size:8.5pt}
+  .gauge{padding:6px 12px;margin-bottom:6px;break-inside:avoid}
+  .gauge .bar{height:12px;margin:6px 0 4px}
+  .two{grid-template-columns:1.35fr 1fr;gap:10px;break-inside:avoid;margin-top:4px}
+  .two h3{font-size:11pt}
+  .chartbox{height:auto;padding:4px;border:1px solid var(--line)}
+  .chartbox canvas{display:none!important}
+  #mchartImg{display:block;max-height:56mm;object-fit:contain}
+  .cinfo{gap:4px 14px}
+  .cinfo dt{font-size:9pt;white-space:nowrap}
+  .cinfo dd{font-size:9.5pt;text-align:right}
+  .print-head{margin-bottom:8px}
+  .card .k{font-size:9pt}
+  .msum td,.msum th{font-size:8pt;padding:2px 5px!important}
+  .detail{display:none}
+  body.with-detail .detail{display:block;break-before:page}
+  body.with-detail .detail summary{list-style:none}
+  tr{break-inside:avoid}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
@@ -150,18 +322,26 @@ footer{margin-top:40px;padding:22px 0 36px;background:var(--band);font-size:13.5
 
 <main class="wrap" id="app"><div class="loading">데이터를 불러오는 중입니다.</div></main>
 
+<div class="mbar" id="mbar" aria-live="polite">
+  <div class="info" id="mbarInfo">ETF를 눌러 담아주세요</div>
+  <button class="btn sec" id="mbarEdit">비율</button>
+  <button class="btn pri" id="mbarCalc" disabled>계산하기</button>
+</div>
+
 <footer><div class="wrap">
-  모든 미래 분배금은 최근 12개월 지급 실적을 1년 뒤로 옮긴 추정치이며 실제 분배금은 운용사 공시에 따라 달라집니다. 투자 권유가 아니며, 세금은 일반 과세계좌(원천징수 15.4%) 기준 참고용입니다.
+  모든 미래 분배금은 최근 지급 실적을 바탕으로 한 추정치이며 실제 분배금은 운용사 공시에 따라 달라집니다. 투자 권유가 아니며, 세금은 일반 과세계좌(원천징수 15.4%) 기준 참고용입니다.
 </div></footer>
 
 <script>
 const CAT = {domestic:"국내주식", overseas:"해외주식", bond:"채권", commodity:"원자재", derivative:"파생", other:"기타"};
-const FILTERS = [["all","전체"],["domestic","국내주식"],["overseas","해외주식"],["bond","채권"],["cc","커버드콜"],["etc","기타"]];
-const SORTS = [["yield","분배율 높은순"],["ret","1년 수익률 높은순"],["total","분배율+수익률 높은순"]];
-const PALETTE = ["#F37321","#0B2D5B","#3E7CB1","#F2A65A","#7A8FA6","#B5523B","#2E9C8F","#8C6BB1","#C9A227","#5B6475"];
+const TYPES = [["domestic","국내주식"],["overseas","해외주식"],["bond","채권"],["etc","원자재·파생·기타"],["cc","커버드콜"]];
+const FREQS = [["M","월"],["Q","분기"],["H","반기"],["Y","연"],["X","기타·불규칙"]];
+const SORTS = [["yield","분배율 높은순"],["ret","1년 수익률 높은순"],["aum","순자산 큰순"]];
+const PALETTE = ["#F37321","#0B2D5B","#3E7CB1","#E9A23B","#7A8FA6","#B5523B","#2E9C8F","#8C6BB1","#C9A227","#5B6475"];
 const TAX_RATE = 0.154, COMP_LIMIT = 20000000, MAX_SEL = 10;
 
-let D, state = {filter:"all", sort:"yield", q:"", monthly:false, sel:[]}, chart;
+let D, chart, lastCalc = null, sharedView = false;
+const state = {sort:"yield", q:"", types:{}, freqs:new Set(), sel:[]};
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const won = v => v == null ? "—" : Math.round(v).toLocaleString("ko-KR") + "원";
@@ -172,28 +352,35 @@ const man = v => {
   if (Math.abs(a) >= 1e4) return `${Math.round(a/1e4).toLocaleString("ko-KR")}만원`;
   return a.toLocaleString("ko-KR") + "원";
 };
-const pctTxt = (v, digits=2) => v == null || isNaN(v) ? '<span class="na">—</span>' : (v*100).toFixed(digits) + "%";
+const pctTxt = (v, d=2) => v == null || isNaN(v) ? '<span class="na">—</span>' : (v*100).toFixed(d) + "%";
 const retTxt = v => v == null ? '<span class="na">—</span>' : (v >= 0 ? `<span class="up">+${v.toFixed(1)}%</span>` : `<span class="dn">${v.toFixed(1)}%</span>`);
 const ymd = s => new Date(+s.slice(0,4), +s.slice(4,6)-1, +s.slice(6,8));
 const fmtD = d => `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`;
 const key = d => `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+const DAY = 86400000;
 
-function freq(e){
-  const n = e.cnt12;
-  if (n >= 11) return "월";
-  if (n >= 4) return n === 4 ? "분기" : `연${n}회`;
-  return n ? `연${n}회` : "—";
+/* distribution cycle inferred from the gaps between the latest record dates */
+function cycle(e){
+  if (e._cyc) return e._cyc;
+  const recs = e.hist.map(h => ymd(h[0])).filter(d => d <= ymd(D.asof));
+  const gaps = []; for (let i = recs.length-1; i > 0 && gaps.length < 3; i--) gaps.push((recs[i]-recs[i-1])/DAY);
+  let c = "X";
+  if (gaps.length){
+    const g = gaps.slice().sort((a,b)=>a-b)[Math.floor(gaps.length/2)];
+    c = g <= 45 ? "M" : g <= 110 ? "Q" : g <= 220 ? "H" : g <= 400 ? "Y" : "X";
+  } else if (recs.length === 1) c = "Y";
+  return e._cyc = c;
 }
-function bucket(e){ return e.covered_call ? "cc" : (["domestic","overseas","bond"].includes(e.cat) ? e.cat : "etc"); }
+const CYC_TXT = {M:"월", Q:"분기", H:"반기", Y:"연", X:"불규칙"};
+function bucket(e){ return ["domestic","overseas","bond"].includes(e.cat) ? e.cat : "etc"; }
 
 fetch("data/etf.json?v=" + Date.now()).then(r => { if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-  .then(js => { D = js; init(); })
+  .then(js => { D = js; (document.fonts ? document.fonts.ready : Promise.resolve()).then(init); })
   .catch(e => { $("#app").innerHTML = `<div class="loading">데이터 파일을 읽지 못했습니다: ${esc(e.message)}</div>`; });
 
 function init(){
-  if (D.status !== "ok"){
-    $("#app").innerHTML = `<div class="loading">아직 첫 데이터 수집 전입니다. GitHub Actions에서 <b>Update ETF data</b>를 실행하세요.</div>`; return;
-  }
+  if (window.Chart){ Chart.defaults.font.family = getComputedStyle(document.body).fontFamily; Chart.defaults.font.size = 13; Chart.defaults.color = "#5B6475"; }
+  if (D.status !== "ok"){ $("#app").innerHTML = `<div class="loading">아직 첫 데이터 수집 전입니다.</div>`; return; }
   $("#asof").textContent = `${D.asof.slice(0,4)}.${D.asof.slice(4,6)}.${D.asof.slice(6)} · ${D.etfs.length}개 ETF (순자산 ${D.min_aum_eok}억원 이상, 최근 12개월 분배)`;
   $("#app").innerHTML = `
   <section class="amount" aria-label="투자 총액">
@@ -205,25 +392,32 @@ function init(){
   <div class="grid">
     <section aria-labelledby="h-list">
       <h2 id="h-list"><span class="step">2</span>ETF 고르기</h2>
-      <p class="lead">행을 누르면 오른쪽 목록에 담깁니다 (최대 ${MAX_SEL}개). 분배율은 최근 12개월 분배금 합계 ÷ 현재가입니다.</p>
-      <div class="chips" id="sorts" role="group" aria-label="정렬"></div>
-      <div class="tools">
-        <div class="chips" id="filters" role="group" aria-label="유형 필터" style="margin:0"></div>
-        <label class="check"><input type="checkbox" id="monthly"> 월 분배만</label>
-        <input class="search" id="q" type="search" placeholder="ETF 이름·코드 검색" aria-label="ETF 검색">
-      </div>
-      <div class="tbl-wrap"><table id="etfTable">
+      <div class="retnote" role="note"><span class="ic">i</span><div><b>1년 수익률은 분배금 포함(재투자 가정) 수익률</b>입니다. NAV(순자산가치) 기준·세전이며 FunETF 집계값입니다. 주가만 본 수익률보다 분배금만큼 높게 나옵니다.</div></div>
+      <div class="fgroup" id="sorts" role="group" aria-label="정렬"><span class="flabel">정렬</span></div>
+      <div class="fgroup" id="types" role="group" aria-label="유형"><span class="flabel">유형</span></div>
+      <div class="fgroup"><span class="flabel"></span><span class="fhelp">한 번 누르면 <b>포함</b>(여러 개 선택 가능), 두 번 누르면 <b>제외</b>, 세 번 누르면 해제</span></div>
+      <div class="fgroup" id="freqs" role="group" aria-label="분배 주기"><span class="flabel">분배 주기</span></div>
+      <div class="fgroup"><span class="flabel">검색</span><input class="search" id="q" type="search" placeholder="ETF 이름·코드" aria-label="ETF 검색"></div>
+      <div class="tbl-wrap" id="etfTableWrap"><table id="etfTable">
         <thead><tr>
           <th class="l"></th><th class="l">#</th><th class="l">ETF</th><th class="l">유형</th>
-          <th>현재가</th><th>12개월 분배금</th><th>분배율</th><th>1년 수익률</th><th>주기</th><th>과표 비율</th><th>순자산</th>
+          <th>현재가</th><th>12개월 분배금</th><th>분배율</th><th><span class="hl">1년 수익률<br>(분배금 포함)</span></th><th>주기</th><th>과표 비율</th><th>순자산</th>
         </tr></thead><tbody></tbody>
       </table></div>
+      <div id="etfCards"></div>
       <p class="lead" id="listNote" style="margin-top:8px"></p>
     </section>
-    <aside aria-labelledby="h-sel">
+    <aside id="panel" aria-labelledby="h-sel">
       <div class="hd"><h2 id="h-sel" style="font-size:19px;margin:0"><span class="step">3</span>담은 ETF와 비율</h2></div>
       <div class="bd" id="selList"></div>
       <div class="ft">
+        <label class="taxsel">국내주식형 과표 추정 기준
+          <select id="taxMode">
+            <option value="mkt">코스피200 실측 배당률 (기본)</option>
+            <option value="krx">KRX 평균 시가배당률 2.63%</option>
+            <option value="cap">분배금 전액 (가장 보수적)</option>
+          </select>
+        </label>
         <div class="sum"><span>비율 합계</span><span id="wsum">0%</span></div>
         <div class="btnrow">
           <button class="btn sec" id="eq">균등 배분</button>
@@ -237,12 +431,13 @@ function init(){
   <section class="notes" aria-labelledby="h-notes">
     <h2 id="h-notes">계산 기준</h2>
     <dl>
-      <dt>분배 일정 <span class="lbl e">추정</span></dt><dd>최근 12개월 지급기준일·지급일을 1년 뒤로 옮겨 예상합니다(주말이면 다음 월요일). 이미 공시된 다음 회차가 있으면 공시 일정을 씁니다. 오늘 이전 기준일 회차는 지금 사도 받을 수 없어 제외합니다.</dd>
-      <dt>분배 금액 <span class="lbl e">추정</span></dt><dd>해당 회차의 직전 1년 주당 분배금 × 매수 수량. 커버드콜 등은 매월 금액 변동이 큽니다.</dd>
-      <dt>과표 <span class="lbl e">추정</span></dt><dd>운용사가 회차별 과세표준을 공개한 ETF는 최근 12개월 실제 비율(과표÷분배금)을 적용하고, 공개하지 않은 ETF는 분배금 전액을 과표로 봅니다. 세법상 과표는 분배금을 넘지 않으므로 이 경우 <b>상한값</b>입니다. 해외·기타형은 매수 시점 과표기준가에 따라 실제 과표가 더 낮을 수 있습니다.</dd>
-      <dt>원천징수</dt><dd>과표 × 15.4%(지방소득세 포함). 연금·ISA 계좌는 과세 방식이 달라 적용되지 않습니다.</dd>
-      <dt>금융소득종합과세</dt><dd>연간 이자·배당 등 금융소득 합계가 2,000만원을 넘으면 종합과세 대상입니다. 이 계산기의 과표는 이 포트폴리오분만이므로 예금 이자 등 다른 금융소득을 더해 판단해야 합니다.</dd>
-      <dt>수량</dt><dd>투자금 × 비율 ÷ 현재가를 소수점 이하 버림. 매매 수수료는 반영하지 않습니다.</dd>
+      <dt>분배율</dt><dd>최근 12개월 분배금 합계 ÷ 현재가.</dd>
+      <dt>1년 수익률</dt><dd>FunETF 제공 NAV 기준 1년 수익률로, 분배금을 재투자한다고 가정한 세전 수익률입니다(분배금 포함).</dd>
+      <dt>분배 주기</dt><dd>최근 지급기준일 사이 간격으로 판정합니다. 최근에 분배 방식이 바뀐 ETF는 바뀐 주기 기준으로 표시됩니다.</dd>
+      <dt>분배 일정 <span class="lbl e">추정</span></dt><dd>월·분기·반기·연 분배 ETF는 가장 최근 지급기준일 패턴(예: 매월 말일, 매월 15일)을 그대로 이어 12개월 일정을 만듭니다. 금액은 1년 전 같은 회차 금액(‘전년 패턴 추정’), 없으면 최근 회차 평균(‘주기 기반 추정’)을 씁니다. 이미 공시된 다음 회차는 공시 일정을 쓰고, 오늘 이전 기준일 회차는 지금 사도 받을 수 없어 제외합니다. 지급일은 기준일 후 같은 영업일 간격으로 추정합니다.</dd>
+      <dt>과표 <span class="lbl e">추정</span></dt><dd>① 운용사가 회차별 과세표준을 공개한 ETF(KODEX 등)는 실제 비율을 씁니다. ② 공개하지 않은 <b>국내주식형 중 커버드콜이거나 분배율 6% 초과</b> ETF는 분배금 대부분이 비과세(주식 매매차익·옵션 프리미엄)이고 배당 수입만 과세되므로 <b>현재가 × 배당률</b>을 연간 과표로 봅니다(분배금을 넘지 않음). 배당률은 기본 <b>코스피200 실측</b>(KODEX 200 최근 12개월 공시 과표 ÷ 현재가), 이름에 고배당·금융·은행 등이 들어간 ETF는 <b>고배당·금융형 실측 중앙값</b>을 씁니다. ③ 그 밖의 일반 국내주식형은 분배금이 대부분 배당이라 전액을 과표로 봅니다(KODEX 공시 사례 90~100%). ④ 해외·채권·리츠 등은 분배금 전액(<b>상한값</b>)입니다.</dd>
+      <dt>원천징수</dt><dd>과표 × 15.4%(지방소득세 포함). 연금·ISA 계좌는 적용되지 않습니다.</dd>
+      <dt>금융소득종합과세</dt><dd>연간 금융소득 합계가 2,000만원을 넘으면 종합과세 대상입니다. 다른 금융소득(예금 이자 등)을 더해 판단해야 합니다.</dd>
     </dl>
   </section>`;
 
@@ -250,104 +445,206 @@ function init(){
   const fmtAmt = () => { const n = parseInt(amt.value.replace(/[^0-9]/g,"") || "0", 10); amt.value = n.toLocaleString("ko-KR"); $("#amtHint").textContent = n ? "= " + man(n) : ""; };
   amt.addEventListener("input", fmtAmt); fmtAmt();
   document.querySelectorAll(".qbtn").forEach(b => b.onclick = () => { amt.value = (+b.dataset.v).toLocaleString("ko-KR"); fmtAmt(); });
-  $("#q").addEventListener("input", e => { state.q = e.target.value.trim(); renderTable(); });
-  $("#monthly").addEventListener("change", e => { state.monthly = e.target.checked; renderTable(); });
+  $("#q").addEventListener("input", e => { state.q = e.target.value.trim(); renderList(); });
   $("#eq").onclick = () => { equalize(); renderSel(); };
   $("#calc").onclick = calculate;
-  renderControls(); renderTable(); renderSel();
+  const mk = mktRate(); const opt = document.querySelector('#taxMode option[value="mkt"]');
+  if (mk != null) opt.textContent = `코스피200 실측 배당률 ${(mk*100).toFixed(2)}% (기본)`; else { opt.disabled = true; taxMode = "krx"; $("#taxMode").value = "krx"; }
+  $("#taxMode").onchange = e => { taxMode = e.target.value; renderList(); if (!$("#result").hidden) calculate(); };
+  $("#mbarCalc").onclick = calculate;
+  $("#mbarEdit").onclick = () => $("#panel").scrollIntoView({behavior:"smooth", block:"start"});
+  renderControls(); renderList(); renderSel();
+  if (readShare()){ sharedView = true; calculate(); sharedView = false; setTimeout(() => $("#result").scrollIntoView({block:"start"}), 300); }
 }
 
 function renderControls(){
-  $("#sorts").innerHTML = SORTS.map(([k,t]) => `<button class="chip sort" aria-pressed="${state.sort===k}" data-k="${k}">${t}</button>`).join("");
-  $("#filters").innerHTML = FILTERS.map(([k,t]) => `<button class="chip" aria-pressed="${state.filter===k}" data-k="${k}">${t}</button>`).join("");
-  document.querySelectorAll("#sorts .chip").forEach(b => b.onclick = () => { state.sort = b.dataset.k; renderControls(); renderTable(); });
-  document.querySelectorAll("#filters .chip").forEach(b => b.onclick = () => { state.filter = b.dataset.k; renderControls(); renderTable(); });
+  const lab = t => `<span class="flabel">${t}</span>`;
+  $("#sorts").innerHTML = lab("정렬") + SORTS.map(([k,t]) => `<button class="chip sort" aria-pressed="${state.sort===k}" data-k="${k}">${t}</button>`).join("");
+  $("#types").innerHTML = lab("유형") + TYPES.map(([k,t]) => `<button class="chip tri" data-k="${k}" data-s="${state.types[k]||""}" aria-label="${t} ${state.types[k]==="in"?"포함":state.types[k]==="out"?"제외":"선택 안 함"}">${t}</button>`).join("")
+    + (Object.keys(state.types).length ? `<button class="chip reset" id="typeReset">초기화</button>` : "");
+  $("#freqs").innerHTML = lab("분배 주기") + FREQS.map(([k,t]) => `<button class="chip ms" aria-pressed="${state.freqs.has(k)}" data-k="${k}">${t}</button>`).join("")
+    + `<span class="fhelp">여러 개 선택 가능 · 선택 없으면 전체</span>`;
+  document.querySelectorAll("#sorts .chip").forEach(b => b.onclick = () => { state.sort = b.dataset.k; renderControls(); renderList(); });
+  document.querySelectorAll("#types .chip.tri").forEach(b => b.onclick = () => {
+    const k = b.dataset.k, s = state.types[k];
+    if (!s) state.types[k] = "in"; else if (s === "in") state.types[k] = "out"; else delete state.types[k];
+    renderControls(); renderList();
+  });
+  const rs = $("#typeReset"); if (rs) rs.onclick = () => { state.types = {}; renderControls(); renderList(); };
+  document.querySelectorAll("#freqs .chip").forEach(b => b.onclick = () => { const k = b.dataset.k; state.freqs.has(k) ? state.freqs.delete(k) : state.freqs.add(k); renderControls(); renderList(); });
 }
 
+function matchType(e, k){ return k === "cc" ? e.covered_call : bucket(e) === k; }
 function rows(){
   let r = D.etfs.filter(e => e.price > 0);
-  if (state.filter !== "all") r = r.filter(e => bucket(e) === state.filter);
-  if (state.monthly) r = r.filter(e => e.cnt12 >= 11);
-  if (state.q) { const q = state.q.toLowerCase(); r = r.filter(e => e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q)); }
-  const score = e => state.sort === "yield" ? (e.yield12 ?? -1)
-                   : state.sort === "ret" ? (e.ret1y ?? -1e9)
-                   : ((e.yield12 ?? 0) * 100 + (e.ret1y ?? -1e9));
+  const inc = Object.keys(state.types).filter(k => state.types[k] === "in");
+  const exc = Object.keys(state.types).filter(k => state.types[k] === "out");
+  if (inc.length) r = r.filter(e => inc.some(k => matchType(e, k)));
+  if (exc.length) r = r.filter(e => !exc.some(k => matchType(e, k)));
+  if (state.freqs.size) r = r.filter(e => state.freqs.has(cycle(e)));
+  if (state.q){ const q = state.q.toLowerCase(); r = r.filter(e => e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q)); }
+  const score = e => state.sort === "yield" ? (e.yield12 ?? -1) : state.sort === "ret" ? (e.ret1y ?? -1e9) : (e.aum_eok ?? 0);
   return r.sort((a,b) => score(b) - score(a));
 }
 
-function renderTable(){
-  const all = rows(), top = all.slice(0, 30);
-  const selSet = new Set(state.sel.map(s => s.code));
+function tagsHTML(e){ return (e.covered_call ? '<span class="tag cc">커버드콜</span>' : "") + (e.short_history ? '<span class="tag new">이력 1년 미만</span>' : ""); }
+/* ---------- taxable-amount model ----------
+   1) issuer-published per-share taxable amount (KODEX etc.)                    -> "공시"
+   2) Korean-equity ETFs (no disclosure)
+      a) covered-call or distribution yield > 6%: distributions are mostly tax-exempt
+         equity gains / option premium -> annual taxable ~= price x dividend yield  -> "추정"
+         (dividend yield = KOSPI200 measured, or high-dividend group measured for 고배당·금융)
+      b) ordinary equity ETFs: distribution ~= dividends received -> whole amount    -> "일반"
+   3) everything else (overseas, bond, REIT ...): whole distribution (upper bound)  -> "상한" */
+const KRX_DIV = 0.0263;   // KRX: 2025 KOSPI common-stock simple-average dividend yield (2026-04-20)
+const HIGH_YIELD_CUT = 0.06;
+const EQ_EXC = /리츠|부동산|인프라|채권|혼합|금리|머니마켓|CD|KOFR|단기|국채|회사채|TDF|TRF|달러|골드|금현물/;
+const HIGH_NAME = /고배당|금융|은행|증권|보험|배당다우존스|배당가치|주주환원/;
+let taxMode = "mkt";      // mkt | krx | cap
+function isDomEq(e){
+  return e.cat === "domestic" && !EQ_EXC.test(e.name) && !/^(해외지수|채권|통화|상품)/.test(e.seibro_type || "");
+}
+const ttmTax = e => { const asof = ymd(D.asof), st = new Date(asof); st.setFullYear(st.getFullYear()-1);
+  const r = e.hist.filter(h => ymd(h[0]) > st && ymd(h[0]) <= asof); return (r.length && r.every(h => h[3] != null)) ? r.reduce((a,h) => a + h[3], 0) : null; };
+let _mkt, _high;
+function mktRate(){                 /* KODEX 200: published taxable amount over 12 months / price */
+  if (_mkt !== undefined) return _mkt;
+  const k = D.etfs.find(e => e.code === "069500"), t = k ? ttmTax(k) : null;
+  return _mkt = (t != null && k.price) ? t / k.price : null;
+}
+function highRate(){                /* median measured taxable yield of published high-dividend equity ETFs */
+  if (_high !== undefined) return _high;
+  const v = D.etfs.filter(e => isDomEq(e) && !e.covered_call && HIGH_NAME.test(e.name) && e.price)
+    .map(e => { const t = ttmTax(e); return t != null ? t / e.price : null; }).filter(x => x != null && x > 0).sort((a,b) => a-b);
+  return _high = v.length >= 3 ? v[Math.floor(v.length/2)] : 0.034;
+}
+function baseRate(){ return taxMode === "krx" ? KRX_DIV : mktRate() ?? KRX_DIV; }
+function taxInfo(e){
+  if (e.tax_ratio != null) return {ratio: e.tax_ratio, kind: "공시"};
+  if (!isDomEq(e) || taxMode === "cap" || !(e.dist12 > 0 && e.price > 0)) return {ratio: 1, kind: "상한"};
+  const y = e.dist12 / e.price;
+  if (e.covered_call || y > HIGH_YIELD_CUT){
+    const high = HIGH_NAME.test(e.name), rate = high ? Math.max(highRate(), taxMode === "krx" ? KRX_DIV : 0) : baseRate();
+    return {ratio: Math.min(1, rate / y), kind: "추정", rate, high};
+  }
+  return {ratio: 1, kind: "일반"};
+}
+const MODE_TXT = () => taxMode === "cap" ? "분배금 전액" :
+  `${taxMode === "krx" ? `KRX 평균 시가배당률 ${(KRX_DIV*100).toFixed(2)}%` : `코스피200 실측 ${(mktRate()*100).toFixed(2)}%`} · 고배당·금융형 ${(Math.max(highRate(), taxMode === "krx" ? KRX_DIV : 0)*100).toFixed(2)}%`;
+function taxCell(e){
+  const t = taxInfo(e);
+  if (t.kind === "공시") return pctTxt(t.ratio, 0);
+  if (t.kind === "추정") return `<span class="est" title="국내주식형 커버드콜·고분배: 현재가 × ${(t.rate*100).toFixed(2)}%(${t.high ? "고배당·금융형 실측" : "시장 배당"})를 연간 과표로 추정">≈${Math.round(t.ratio*100)}%</span>`;
+  if (t.kind === "일반") return '<span title="일반 국내주식형: 분배금 대부분이 배당이라 전액을 과표로 계산">100%<small class="na"> 일반</small></span>';
+  return '<span class="na" title="운용사 미공개: 분배금 전액을 과표로 계산(상한)">미공개</span>';
+}
+function taxShort(e){ const t = taxInfo(e); return t.kind === "공시" ? Math.round(t.ratio*100) + "%" : t.kind === "추정" ? "≈" + Math.round(t.ratio*100) + "% 추정" : t.kind === "일반" ? "100% (일반)" : "미공개"; }
+
+function renderList(){
+  const all = rows(), top = all.slice(0, 30), selSet = new Set(state.sel.map(s => s.code));
   $("#etfTable tbody").innerHTML = top.map((e,i) => `
     <tr class="${selSet.has(e.code) ? "sel" : ""}" data-c="${esc(e.code)}" tabindex="0" aria-pressed="${selSet.has(e.code)}">
       <td class="l"><span class="addbox">${selSet.has(e.code) ? "✓" : ""}</span></td>
       <td class="l rank">${i+1}</td>
-      <td class="l nm">${esc(e.name)}${e.covered_call ? '<span class="tag cc">커버드콜</span>' : ""}${e.short_history ? '<span class="tag new">이력 1년 미만</span>' : ""}<small>${esc(e.code)} · ${esc(e.issuer)}</small></td>
+      <td class="l nm">${esc(e.name)}${tagsHTML(e)}<small>${esc(e.code)} · ${esc(e.issuer)}</small></td>
       <td class="l">${CAT[e.cat] || "기타"}</td>
-      <td>${won(e.price)}</td>
-      <td>${won(e.dist12)}</td>
-      <td class="yld">${pctTxt(e.yield12)}</td>
-      <td>${retTxt(e.ret1y)}</td>
-      <td>${freq(e)}</td>
-      <td>${e.tax_ratio == null ? '<span class="na" title="운용사 미공개: 분배금 전액을 과표로 계산(상한)">미공개</span>' : pctTxt(e.tax_ratio, 0)}</td>
+      <td>${won(e.price)}</td><td>${won(e.dist12)}</td>
+      <td class="yld">${pctTxt(e.yield12)}</td><td>${retTxt(e.ret1y)}</td>
+      <td>${CYC_TXT[cycle(e)]}</td><td>${taxCell(e)}</td>
       <td>${e.aum_eok != null ? e.aum_eok.toLocaleString("ko-KR") + "억" : "—"}</td>
     </tr>`).join("") || `<tr><td colspan="11" class="l na" style="padding:30px">조건에 맞는 ETF가 없습니다.</td></tr>`;
+  $("#etfCards").innerHTML = top.map((e,i) => `
+    <div class="ecard ${selSet.has(e.code) ? "sel" : ""}" data-c="${esc(e.code)}" role="button" tabindex="0" aria-pressed="${selSet.has(e.code)}">
+      <div class="top"><span class="addbox">${selSet.has(e.code) ? "✓" : ""}</span>
+        <div class="t">${i+1}. ${esc(e.name)}${tagsHTML(e)}<small>${esc(e.code)} · ${esc(e.issuer)} · ${CAT[e.cat] || "기타"}</small></div></div>
+      <div class="mx">
+        <div><span>분배율</span><b class="yld">${pctTxt(e.yield12)}</b></div>
+        <div><span>1년(분배 포함)</span><b>${retTxt(e.ret1y)}</b></div>
+        <div><span>분배 주기</span><b>${CYC_TXT[cycle(e)]}</b></div>
+      </div>
+      <div class="ft2"><span>현재가 ${won(e.price)} · 12개월 분배금 ${won(e.dist12)}</span><span>과표 ${taxShort(e)}</span></div>
+    </div>`).join("") || `<div class="empty-sel">조건에 맞는 ETF가 없습니다.</div>`;
   $("#listNote").textContent = `조건에 맞는 ${all.length}개 중 상위 ${top.length}개 표시. 검색하면 전체에서 찾습니다.`;
-  document.querySelectorAll("#etfTable tbody tr[data-c]").forEach(tr => {
-    const t = () => toggle(tr.dataset.c);
-    tr.onclick = t; tr.onkeydown = ev => { if (ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); t(); } };
+  document.querySelectorAll("#etfTable tbody tr[data-c], #etfCards .ecard[data-c]").forEach(el => {
+    const t = () => toggle(el.dataset.c);
+    el.onclick = t; el.onkeydown = ev => { if (ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); t(); } };
   });
 }
 
-function equalize(){
-  const n = state.sel.length; if (!n) return;
-  const base = Math.floor(1000 / n) / 10;
-  state.sel.forEach((s,i) => s.w = i === 0 ? +(100 - base*(n-1)).toFixed(1) : base);
-}
+function equalize(){ const n = state.sel.length; if (!n) return; const base = Math.floor(1000/n)/10; state.sel.forEach((s,i) => s.w = i === 0 ? +(100 - base*(n-1)).toFixed(1) : base); }
 function toggle(code){
   const i = state.sel.findIndex(s => s.code === code);
   if (i >= 0) state.sel.splice(i, 1);
-  else {
-    if (state.sel.length >= MAX_SEL){ $("#msg").textContent = `최대 ${MAX_SEL}개까지 담을 수 있습니다.`; return; }
-    state.sel.push({code, w: 0});
-    equalize();   // 담을 때마다 균등 배분 후 사용자가 조정
-  }
-  renderSel(); renderTable();
+  else { if (state.sel.length >= MAX_SEL){ $("#msg").textContent = `최대 ${MAX_SEL}개까지 담을 수 있습니다.`; return; } state.sel.push({code, w:0}); equalize(); }
+  renderSel(); renderList();
 }
-
 function renderSel(){
   const box = $("#selList");
-  if (!state.sel.length){ box.innerHTML = '<div class="empty-sel">왼쪽 표에서 ETF를 눌러 담아주세요.</div>'; }
-  else box.innerHTML = state.sel.map(s => { const e = D.etfs.find(x => x.code === s.code);
-    return `<div class="srow"><div class="n">${esc(e.name)}<small>분배율 ${pctTxt(e.yield12)} · ${freq(e)} 분배</small></div>
-      <div class="pct"><input type="number" min="0" max="100" step="0.1" value="${s.w}" data-c="${esc(s.code)}" aria-label="${esc(e.name)} 비율"><span>%</span></div>
-      <button class="rm" data-c="${esc(s.code)}" aria-label="${esc(e.name)} 빼기">×</button></div>`; }).join("");
-  box.querySelectorAll("input").forEach(inp => inp.oninput = () => { const s = state.sel.find(x => x.code === inp.dataset.c); s.w = parseFloat(inp.value) || 0; updateSum(); });
+  box.innerHTML = state.sel.length ? state.sel.map(s => { const e = D.etfs.find(x => x.code === s.code);
+    return `<div class="srow"><div class="n">${esc(e.name)}<small>분배율 ${pctTxt(e.yield12)} · ${CYC_TXT[cycle(e)]} 분배</small></div>
+      <div class="pct"><input type="number" inputmode="decimal" min="0" max="100" step="0.1" value="${s.w}" data-c="${esc(s.code)}" aria-label="${esc(e.name)} 비율"><span>%</span></div>
+      <button class="rm" data-c="${esc(s.code)}" aria-label="${esc(e.name)} 빼기">×</button></div>`; }).join("")
+    : '<div class="empty-sel">위 목록에서 ETF를 눌러 담아주세요.</div>';
+  box.querySelectorAll("input").forEach(inp => inp.oninput = () => { state.sel.find(x => x.code === inp.dataset.c).w = parseFloat(inp.value) || 0; updateSum(); });
   box.querySelectorAll(".rm").forEach(b => b.onclick = () => toggle(b.dataset.c));
   updateSum();
 }
 function updateSum(){
   const t = state.sel.reduce((a,s) => a + s.w, 0), ok = Math.abs(t - 100) < 0.05 && state.sel.length > 0;
   $("#wsum").innerHTML = ok ? `${t.toFixed(1)}%` : `<span class="bad">${t.toFixed(1)}% (100%로 맞춰주세요)</span>`;
-  $("#calc").disabled = !ok; $("#msg").textContent = "";
+  $("#calc").disabled = !ok; $("#mbarCalc").disabled = !ok; $("#msg").textContent = "";
+  $("#mbarInfo").innerHTML = state.sel.length ? `담은 ETF <b>${state.sel.length}개</b><br>비율 합계 ${ok ? `<b>${t.toFixed(1)}%</b>` : `<b style="color:var(--orange-ink)">${t.toFixed(1)}%</b>`}` : "ETF를 눌러 담아주세요";
 }
 
 /* ---------- projection ---------- */
 function addYear(d){ const n = new Date(d.getFullYear()+1, d.getMonth(), d.getDate()); if (n.getMonth() !== d.getMonth()) n.setDate(0); return n; }
+function addMonths(d, m){ const n = new Date(d.getFullYear(), d.getMonth()+m, d.getDate()); if (n.getDate() !== d.getDate()) n.setDate(0); return n; }
 function rollWeekday(d){ const n = new Date(d); while (n.getDay() === 0 || n.getDay() === 6) n.setDate(n.getDate()+1); return n; }
-
+const mkey = d => key(d).slice(0,6);
+function rollBack(d){ const n = new Date(d); while (n.getDay() === 0 || n.getDay() === 6) n.setDate(n.getDate()-1); return n; }
+const lastDay = (y, m) => new Date(y, m + 1, 0);
+const STEP = {M:1, Q:3, H:6, Y:12}, AVG_N = {M:3, Q:4, H:2, Y:1};
 function project(e){
   const asof = ymd(D.asof), end = new Date(asof); end.setFullYear(end.getFullYear()+1);
-  const start12 = new Date(asof); start12.setFullYear(start12.getFullYear()-1);
-  const announced = e.hist.filter(h => ymd(h[0]) > asof);
-  const annMonths = new Set(announced.map(h => h[0].slice(0,6)));
-  const out = announced.filter(h => ymd(h[0]) <= end).map(h => ({rec: ymd(h[0]), pay: ymd(h[1] || h[0]), amt: h[2], tax: h[3], basis: "a"}));
-  e.hist.filter(h => ymd(h[0]) > start12 && ymd(h[0]) <= asof).forEach(h => {
-    const rec = rollWeekday(addYear(ymd(h[0]))), pay = rollWeekday(addYear(ymd(h[1] || h[0])));
-    if (rec <= asof || rec > end) return;
-    if (annMonths.has(key(rec).slice(0,6))) return;
-    out.push({rec, pay, amt: h[2], tax: h[3], basis: "p"});
-  });
+  const out = [];
+  const near = (rec, days) => out.some(o => Math.abs(o.rec - rec) / DAY < days);
+  /* 1) next distributions already announced (record date after today) */
+  e.hist.filter(h => ymd(h[0]) > asof && ymd(h[0]) <= end)
+    .forEach(h => out.push({rec: ymd(h[0]), pay: ymd(h[1] || h[0]), amt: h[2], tax: h[3], basis: "a"}));
+  const past = e.hist.filter(h => ymd(h[0]) <= asof);
+  if (!past.length) return out;
+  const cyc = cycle(e), step = STEP[cyc];
+  const lagOf = h => Math.max(0, Math.round((ymd(h[1] || h[0]) - ymd(h[0])) / DAY));
+  if (step){
+    /* 2) regular payers: roll the CURRENT schedule forward from the latest record date.
+          amount = same slot one year earlier if it exists (seasonality), else recent average */
+    const last = past[past.length-1], ld = ymd(last[0]);
+    const monthEnd = ld.getDate() >= lastDay(ld.getFullYear(), ld.getMonth()).getDate() - 3;
+    const recent = past.slice(-AVG_N[cyc]);
+    const avg = recent.reduce((a,h) => a + h[2], 0) / recent.length;
+    const avgLag = Math.round(recent.reduce((a,h) => a + lagOf(h), 0) / recent.length);
+    for (let k = 1; k <= 60; k++){
+      const t = new Date(ld.getFullYear(), ld.getMonth() + k * step, 1);
+      const raw = monthEnd ? lastDay(t.getFullYear(), t.getMonth()) : addMonths(ld, k * step);
+      const rec = rollBack(raw);
+      if (rec <= asof) continue;
+      if (rec > end) break;
+      if (near(rec, step === 1 ? 15 : 40)) continue;
+      const ago = new Date(rec); ago.setFullYear(ago.getFullYear() - 1);
+      const match = past.find(h => Math.abs(ymd(h[0]) - ago) / DAY <= 20);
+      const lag = match ? lagOf(match) : avgLag;
+      out.push({rec, pay: rollWeekday(new Date(rec.getTime() + lag * DAY)),
+        amt: match ? match[2] : avg, tax: match ? match[3] : null, basis: match ? "p" : "c"});
+    }
+  } else {
+    /* 3) irregular payers: last 12 months shifted one year */
+    const start12 = new Date(asof); start12.setFullYear(start12.getFullYear()-1);
+    past.filter(h => ymd(h[0]) > start12).forEach(h => {
+      const rec = rollBack(addYear(ymd(h[0])));
+      if (rec <= asof || rec > end || near(rec, 10)) return;
+      out.push({rec, pay: rollWeekday(new Date(rec.getTime() + lagOf(h) * DAY)), amt: h[2], tax: h[3], basis: "p"});
+    });
+  }
   return out.sort((a,b) => a.pay - b.pay);
 }
 
@@ -359,71 +656,172 @@ function calculate(){
     return {e, color: PALETTE[i % PALETTE.length], w: s.w, alloc, qty, invested: qty * e.price, events: project(e)};
   });
   const asof = ymd(D.asof);
-  const months = []; for (let k = 0; k < 13; k++){ const d = new Date(asof.getFullYear(), asof.getMonth()+k, 1); months.push(`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}`); }
+  const months = []; for (let k = 0; k < 13; k++){ const d = new Date(asof.getFullYear(), asof.getMonth()+k, 1); months.push(mkey(d)); }
   const flows = [];
   items.forEach(it => it.events.forEach(ev => {
     const gross = ev.amt * it.qty;
     let taxable, tb;
     if (ev.tax != null){ taxable = ev.tax * it.qty; tb = "공시"; }
-    else if (it.e.tax_ratio != null){ taxable = gross * it.e.tax_ratio; tb = "공시비율"; }
-    else { taxable = gross; tb = "상한"; }
+    else { const t = taxInfo(it.e); taxable = gross * t.ratio; tb = t.kind === "공시" ? "공시비율" : t.kind; }
     const wh = Math.floor(taxable * TAX_RATE / 10) * 10;
-    flows.push({it, ev, gross, taxable, tb, wh, net: gross - wh, m: key(ev.pay).slice(0,6)});
+    flows.push({it, ev, gross, taxable, tb, wh, net: gross - wh, m: mkey(ev.pay)});
   }));
   flows.sort((a,b) => a.ev.pay - b.ev.pay);
   const sum = k => flows.reduce((a,f) => a + f[k], 0);
   const G = sum("gross"), T = sum("taxable"), W = sum("wh"), N = sum("net");
   const invested = items.reduce((a,i) => a + i.invested, 0);
-  const anyUpper = flows.some(f => f.tb === "상한");
+  const anyUpper = flows.some(f => f.tb === "상한"), anyEst = flows.some(f => f.tb === "추정");
   const usedMonths = months.filter(m => flows.some(f => f.m === m));
+  const rate = (a, b) => b ? (a / b * 100).toFixed(2) + "%" : "—";
+  const BASIS = {a:"공시 일정", p:"전년 패턴 추정", c:"주기 기반 추정"};
 
+  const end = new Date(asof); end.setFullYear(end.getFullYear()+1);
+  const monthRows = usedMonths.map(m => { const fs = flows.filter(f => f.m === m);
+    return {m, names:[...new Set(fs.map(f => f.it))], g: fs.reduce((a,f)=>a+f.gross,0), w: fs.reduce((a,f)=>a+f.wh,0), n: fs.reduce((a,f)=>a+f.net,0)}; });
+  lastCalc = {total, sel: state.sel.map(s => ({code: s.code, w: s.w}))};
+
+  const prevCust = $("#custName")?.value || "", prevAuthor = $("#author")?.value || "", prevDetail = $("#withDetail")?.checked || false;
   const R = $("#result"); R.hidden = false;
   R.innerHTML = `
-    <h2><span class="step">4</span>향후 12개월 예상 결과</h2>
-    <p class="lead">${fmtD(asof)} 기준 매수 가정 · 실제 매수액 ${won(invested)} (잔액 ${won(total - invested)})</p>
+    <div class="print-head">
+      <div class="ph-t">ETF 분배금 시뮬레이션</div>
+      <div class="ph-m"></div>
+    </div>
+    <div class="rhead">
+      <h2><span class="step">4</span>향후 12개월 예상 결과</h2>
+      <div class="actions">
+        <button class="btn act" id="btnPdf">PDF로 저장 (A4)</button>
+        <button class="btn act ghost" id="btnShare">공유 링크</button>
+      </div>
+    </div>
+    <div class="actions2">
+      <input id="custName" placeholder="고객명 (선택, PDF에만 표시)" aria-label="고객명">
+      <input id="author" placeholder="작성자 (선택)" aria-label="작성자">
+      <label class="check"><input type="checkbox" id="withDetail"> PDF에 회차별 상세표 포함</label>
+      <span class="msg" id="shareMsg"></span>
+    </div>
+    ${sharedView ? `<div class="sharednote">공유받은 시뮬레이션입니다. 금액·비율은 공유 당시와 같고, 계산은 최신 데이터(기준일 ${fmtD(asof)})로 다시 수행됩니다.</div>` : ""}
+
+    <section class="cond" aria-label="시뮬레이션 조건">
+      <div class="principal">
+        <span class="k">투자 원금</span>
+        <span class="v">${man(total)}</span>
+        <span class="s">${won(total)}</span>
+      </div>
+      <dl class="cinfo">
+        <div><dt>실제 매수액</dt><dd>${won(invested)}</dd></div>
+        <div><dt>미매수 잔액(현금)</dt><dd>${won(total - invested)}</dd></div>
+        <div><dt>매수 가정 시점</dt><dd>${fmtD(asof)} 현재가</dd></div>
+        <div><dt>분배금 계산 기간</dt><dd>${fmtD(asof)} ~ ${fmtD(end)}</dd></div>
+        <div style="grid-column:1/-1"><dt>국내주식형 과표 추정 기준</dt><dd>${MODE_TXT()}</dd></div>
+      </dl>
+    </section>
+    <div class="tbl-wrap"><table class="rt comp" style="min-width:860px">
+      <thead><tr><th class="l">구성 ETF</th><th>비율</th><th>매수 수량</th><th>실제 매수액</th><th>분배율(12개월)</th><th>예상 분배금(세전)</th><th class="l">과표 근거</th></tr></thead>
+      <tbody>${items.map(it => { const fs = flows.filter(f => f.it === it), g = fs.reduce((a,f)=>a+f.gross,0);
+        return `<tr><td class="l first" data-label="ETF"><span class="dot" style="background:${it.color}"></span><b>${esc(it.e.name)}</b> <span class="na">${esc(it.e.code)} · ${CYC_TXT[cycle(it.e)]} 분배</span></td>
+          <td data-label="비율"><b>${it.w}%</b></td><td data-label="매수 수량">${it.qty.toLocaleString("ko-KR")}주 <span class="na">@${won(it.e.price)}</span></td>
+          <td data-label="실제 매수액">${won(it.invested)}</td><td data-label="분배율(12개월)">${pctTxt(it.e.yield12)}</td>
+          <td data-label="예상 분배금(세전)"><b>${won(g)}</b> <span class="na">${fs.length}회</span></td>
+          <td class="l" data-label="과표 근거">${(t => t.kind === "공시" ? "운용사 공시 " + Math.round(t.ratio*100) + "%" : t.kind === "추정" ? `배당률 ${(t.rate*100).toFixed(2)}% 기준 ≈${Math.round(t.ratio*100)}%` : t.kind === "일반" ? "일반 국내주식형 → 전액" : '<span class="na">미공개 → 전액(상한)</span>')(taxInfo(it.e))}</td></tr>`; }).join("")}
+        <tr class="tot"><td class="l first" data-label="합계"><b>합계</b></td><td data-label="비율"><b>${state.sel.reduce((a,s)=>a+s.w,0).toFixed(1)}%</b></td><td class="hide-m"></td>
+          <td data-label="실제 매수액"><b>${won(invested)}</b></td><td data-label="가중 분배율"><b>${rate(G, invested)}</b></td><td data-label="예상 분배금(세전)"><b>${won(G)}</b></td><td class="hide-m"></td></tr>
+      </tbody></table></div>
+
     <div class="cards">
-      <div class="card hl"><div class="k">세전 분배금 <span class="lbl e">추정</span></div><div class="v">${man(G)}</div><div class="s">${won(G)} · 투자금 대비 ${invested ? (G/invested*100).toFixed(2) : "—"}%</div></div>
-      <div class="card"><div class="k">과표 합계 <span class="lbl e">${anyUpper ? "추정·상한 포함" : "추정"}</span></div><div class="v">${man(T)}</div><div class="s">${won(T)}</div></div>
-      <div class="card"><div class="k">원천징수 15.4% <span class="lbl e">추정</span></div><div class="v">${man(W)}</div><div class="s">${won(W)}</div></div>
-      <div class="card"><div class="k">세후 수령액 <span class="lbl e">추정</span></div><div class="v">${man(N)}</div><div class="s">${won(N)} · 월평균 ${man(N/12)}</div></div>
+      <div class="card hl"><div class="k">세전 분배금 <span class="lbl e">추정</span></div><div class="v">${man(G)}</div>
+        <div class="r">${rate(G, invested)}<small>투자금 대비</small></div><div class="s">${won(G)}</div></div>
+      <div class="card"><div class="k">과표 합계 <span class="lbl e">${anyUpper ? "추정·상한 포함" : "추정"}</span></div><div class="v">${man(T)}</div>
+        <div class="r">${rate(T, G)}<small>분배금 대비</small></div><div class="s">${won(T)}</div></div>
+      <div class="card"><div class="k">원천징수 <span class="lbl e">추정</span></div><div class="v">${man(W)}</div>
+        <div class="r">15.4%<small>과표 대비</small></div><div class="s">${won(W)}</div></div>
+      <div class="card"><div class="k">세후 수령액 <span class="lbl e">추정</span></div><div class="v">${man(N)}</div>
+        <div class="r">${rate(N, invested)}<small>세후 분배율</small></div><div class="s">${won(N)} · 월평균 ${man(N/12)}</div></div>
     </div>
     <div class="gauge">
       <b>금융소득종합과세 기준(연 2,000만원) 대비 과표</b>
       <div class="bar"><i style="width:${Math.min(T/(COMP_LIMIT*1.5),1)*100}%"></i><span class="line" style="left:${100/1.5}%"></span></div>
-      <div class="lg"><span>이 포트폴리오 과표 ${man(T)}</span><span>${T > COMP_LIMIT ? `<b style="color:var(--orange)">기준 초과 ${man(T-COMP_LIMIT)}</b>` : `기준까지 ${man(COMP_LIMIT - T)} 여유 (다른 금융소득 합산 필요)`}</span></div>
+      <div class="lg"><span>이 포트폴리오 과표 <b style="color:var(--ink)">${man(T)}</b></span><span>${T > COMP_LIMIT ? `<b style="color:var(--orange-ink)">기준 초과 ${man(T-COMP_LIMIT)}</b>` : `기준까지 <b style="color:var(--ink)">${man(COMP_LIMIT - T)}</b> 여유 (다른 금융소득 합산 필요)`}</span></div>
     </div>
-    <h2 style="font-size:19px">월별 입금 예상</h2>
-    <div class="chartbox"><canvas id="mchart" aria-label="월별 ETF별 분배금 차트"></canvas></div>
-    <div class="tbl-wrap"><table style="min-width:900px">
-      <thead><tr><th class="l">지급 예정일</th><th class="l">ETF</th><th>주당 분배금</th><th>수량</th><th>세전</th><th>과표</th><th>원천징수</th><th>세후</th><th class="l">일정 근거</th></tr></thead>
-      <tbody>${usedMonths.map(m => { const fs = flows.filter(f => f.m === m), mt = fs.reduce((a,f) => a + f.net, 0);
-        return `<tr class="month-h"><td colspan="9">${m.slice(0,4)}년 ${+m.slice(4)}월 <span class="mt">세후 ${won(mt)}</span></td></tr>` +
-          fs.map(f => `<tr><td class="l">${fmtD(f.ev.pay)}</td><td class="l"><span class="dot" style="background:${f.it.color}"></span>${esc(f.it.e.name)}</td>
-            <td>${won(f.ev.amt)}</td><td>${f.it.qty.toLocaleString("ko-KR")}주</td><td>${won(f.gross)}</td>
-            <td>${won(f.taxable)}${f.tb === "상한" ? ' <span class="na">(상한)</span>' : ""}</td><td>${won(f.wh)}</td><td><b>${won(f.net)}</b></td>
-            <td class="l"><span class="basis ${f.ev.basis}">${f.ev.basis === "a" ? "공시 일정" : "전년 패턴 추정"}</span></td></tr>`).join("");
-      }).join("") || `<tr><td colspan="9" class="l na" style="padding:24px">향후 12개월 안에 예상되는 분배가 없습니다.</td></tr>`}</tbody>
-    </table></div>
-    <h2 style="font-size:19px;margin-top:28px">ETF별 요약</h2>
-    <div class="tbl-wrap"><table style="min-width:900px">
-      <thead><tr><th class="l">ETF</th><th>비율</th><th>배정액</th><th>현재가</th><th>매수 수량</th><th>실제 매수액</th><th>분배 횟수</th><th>세전 분배금</th><th>과표</th><th>과표 근거</th></tr></thead>
-      <tbody>${items.map(it => { const fs = flows.filter(f => f.it === it);
-        return `<tr><td class="l"><span class="dot" style="background:${it.color}"></span><b>${esc(it.e.name)}</b></td><td>${it.w}%</td><td>${won(it.alloc)}</td><td>${won(it.e.price)}</td>
-          <td>${it.qty.toLocaleString("ko-KR")}주</td><td>${won(it.invested)}</td><td>${fs.length}회</td><td>${won(fs.reduce((a,f)=>a+f.gross,0))}</td>
-          <td>${won(fs.reduce((a,f)=>a+f.taxable,0))}</td><td>${it.e.tax_ratio != null ? "운용사 공시 비율 " + Math.round(it.e.tax_ratio*100) + "%" : '<span class="na">미공개 → 분배금 전액(상한)</span>'}</td></tr>`; }).join("")}
-      </tbody></table></div>`;
 
+    <div class="two">
+      <div>
+        <h3>월별 입금 예상 (세전)</h3>
+        <div class="chartbox"><canvas id="mchart" aria-label="월별 ETF별 분배금 차트"></canvas><img id="mchartImg" alt="월별 분배금 차트"></div>
+      </div>
+      <div>
+        <h3>월별 합계</h3>
+        <div class="tbl-wrap"><table class="msum">
+          <thead><tr><th class="l">입금 월</th><th class="l">입금 ETF</th><th>세전</th><th>세후</th></tr></thead>
+          <tbody>${monthRows.map(r => `<tr><td class="l"><b>${r.m.slice(2,4)}.${r.m.slice(4)}</b></td>
+            <td class="l">${r.names.map(it => `<span class="dot" style="background:${it.color}" title="${esc(it.e.name)}"></span>`).join("")}</td>
+            <td>${won(r.g)}</td><td><b>${won(r.n)}</b></td></tr>`).join("")}
+            <tr class="tot"><td class="l"><b>합계</b></td><td></td><td><b>${won(G)}</b></td><td><b>${won(N)}</b></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <details class="detail" id="detailBox" open>
+      <summary>회차별 상세 입금표 (${flows.length}회)</summary>
+      <div class="tbl-wrap"><table class="rt" style="min-width:900px">
+        <thead><tr><th class="l">지급 예정일</th><th class="l">ETF</th><th>주당 분배금</th><th>수량</th><th>세전</th><th>과표</th><th>원천징수</th><th>세후</th><th class="l">일정 근거</th></tr></thead>
+        <tbody>${usedMonths.map(m => { const fs = flows.filter(f => f.m === m), mt = fs.reduce((a,f) => a + f.net, 0);
+          return `<tr class="month-h"><td colspan="9">${m.slice(0,4)}년 ${+m.slice(4)}월 <span class="mt">세후 ${won(mt)}</span></td></tr>` +
+            fs.map(f => `<tr><td class="l first" data-label="지급 예정일"><span class="dot" style="background:${f.it.color}"></span>${fmtD(f.ev.pay)}<span class="mname"> · ${esc(f.it.e.name)}</span></td>
+              <td class="l hide-m" data-label="ETF">${esc(f.it.e.name)}</td>
+              <td data-label="주당 분배금">${won(f.ev.amt)}</td><td data-label="수량">${f.it.qty.toLocaleString("ko-KR")}주</td><td data-label="세전">${won(f.gross)}</td>
+              <td data-label="과표">${won(f.taxable)}${f.tb === "상한" ? ' <span class="na">(상한)</span>' : f.tb === "추정" ? ' <span class="na">(추정)</span>' : ""}</td><td data-label="원천징수">${won(f.wh)}</td><td data-label="세후"><b>${won(f.net)}</b></td>
+              <td class="l" data-label="일정 근거"><span class="basis ${f.ev.basis}">${BASIS[f.ev.basis]}</span></td></tr>`).join("");
+        }).join("") || `<tr><td colspan="9" class="l na" style="padding:24px">향후 12개월 안에 예상되는 분배가 없습니다.</td></tr>`}</tbody>
+      </table></div>
+    </details>
+    <div class="print-foot">본 자료는 공개 데이터(SEIBro 분배 내역, 네이버 금융 시세, FunETF 과세표준)를 바탕으로 한 <b>추정 시뮬레이션</b>이며 투자 권유가 아닙니다. 미래 분배금은 최근 지급 실적을 이어 붙인 추정치로 실제와 다를 수 있습니다. 과표 ‘추정’은 국내주식형에 현재가 × 국내 증시 평균배당률을 적용한 값, ‘상한’은 운용사 미공개로 분배금 전액을 과표로 본 값입니다. 원천징수 15.4%는 일반 과세계좌 기준이며, 금융소득종합과세 여부는 다른 금융소득을 합산해 판단해야 합니다.</div>`;
+
+  $("#custName").value = prevCust; $("#author").value = prevAuthor; $("#withDetail").checked = prevDetail; refreshPrintHead();
+  $("#btnPdf").onclick = () => { document.body.classList.toggle("with-detail", $("#withDetail").checked); refreshPrintHead(); preparePrint(); setTimeout(() => window.print(), 50); };
+  $("#btnShare").onclick = share;
+  ["#custName","#author"].forEach(sel => $(sel).addEventListener("input", refreshPrintHead));
   if (chart) chart.destroy();
-  const labels = months.map(m => `${m.slice(2,4)}.${m.slice(4)}`);
+  const mobile = matchMedia("(max-width:760px)").matches;
   chart = new Chart($("#mchart"), {
     type: "bar",
-    data: { labels, datasets: items.map(it => ({ label: it.e.name, backgroundColor: it.color, maxBarThickness: 46,
+    data: { labels: months.map(m => `${m.slice(2,4)}.${m.slice(4)}`), datasets: items.map(it => ({ label: it.e.name, backgroundColor: it.color, maxBarThickness: 46,
       data: months.map(m => flows.filter(f => f.it === it && f.m === m).reduce((a,f) => a + f.gross, 0)) })) },
-    options: { maintainAspectRatio:false, plugins:{ legend:{ position:"bottom", labels:{ boxWidth:12, font:{ size:13 } } },
+    options: { maintainAspectRatio:false, plugins:{ legend:{ position:"bottom", labels:{ boxWidth:12, font:{ size: mobile ? 11 : 13 } } },
       tooltip:{ callbacks:{ label: c => `${c.dataset.label}: ${won(c.raw)}` } } },
-      scales:{ x:{ stacked:true, grid:{display:false} }, y:{ stacked:true, ticks:{ callback: v => man(v) }, grid:{ color:"#E3E6EB" } } } }
+      scales:{ x:{ stacked:true, grid:{display:false}, ticks:{ font:{ size: mobile ? 10 : 12 } } }, y:{ stacked:true, ticks:{ callback: v => man(v), font:{ size: mobile ? 10 : 12 } }, grid:{ color:"#E3E6EB" } } } }
   });
-  R.scrollIntoView({behavior:"smooth", block:"start"});
+  if (!sharedView) R.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function refreshPrintHead(){
+  const c = $("#custName").value.trim(), a = $("#author").value.trim(), asof = ymd(D.asof);
+  $(".print-head .ph-m").innerHTML = (c ? `고객: <b>${esc(c)}</b> · ` : "") + `작성일 ${fmtD(new Date())} · 시세·분배 데이터 기준일 ${fmtD(asof)}` + (a ? ` · 작성: ${esc(a)}` : "");
+}
+function preparePrint(){ if (chart){ $("#mchartImg").src = chart.toBase64Image("image/png", 1); } }
+window.addEventListener("beforeprint", preparePrint);
+
+/* share link: amount + ETF codes + weights only (no customer data) */
+function shareURL(){
+  const p = lastCalc.sel.map(s => `${s.code}:${s.w}`).join(",");
+  return `${location.origin}${location.pathname}#a=${lastCalc.total}&p=${encodeURIComponent(p)}`;
+}
+async function share(){
+  const url = shareURL(), msg = $("#shareMsg");
+  if (navigator.share && matchMedia("(max-width:760px)").matches){
+    try { await navigator.share({title:"ETF 분배금 시뮬레이션", text:`투자 원금 ${man(lastCalc.total)} ETF 분배금 시뮬레이션`, url}); return; } catch(e){ if (e.name === "AbortError") return; }
+  }
+  try { await navigator.clipboard.writeText(url); msg.textContent = "링크를 복사했습니다. 카카오톡·이메일에 붙여넣으세요."; }
+  catch(e){ window.prompt("아래 링크를 복사하세요", url); }
+}
+function readShare(){
+  const h = location.hash.slice(1); if (!h) return false;
+  const q = new URLSearchParams(h), a = parseInt(q.get("a") || "0", 10), p = q.get("p") || "";
+  const sel = p.split(",").map(x => x.split(":")).filter(x => x.length === 2 && D.etfs.some(e => e.code === x[0])).map(([c,w]) => ({code:c, w:parseFloat(w) || 0})).slice(0, MAX_SEL);
+  if (!a || !sel.length) return false;
+  $("#amt").value = a.toLocaleString("ko-KR"); $("#amt").dispatchEvent(new Event("input"));
+  state.sel = sel; renderSel(); renderList();
+  return true;
 }
 </script>
 </body>
