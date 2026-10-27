@@ -276,7 +276,7 @@ tr.tot td{background:var(--band);border-top:2px solid var(--line)}
   .print-head{display:block;border-bottom:3px solid var(--orange);padding-bottom:6px;margin-bottom:10px}
   .print-head .ph-t{font-size:18pt;font-weight:800;color:var(--navy)}
   .print-head .ph-m{font-size:9.5pt;color:var(--sub)}
-  .print-foot{display:block;font-size:7.8pt;line-height:1.4;color:var(--sub);border-top:1px solid var(--line);padding-top:6px;margin-top:10px;break-inside:avoid}
+  .print-foot{display:block;font-size:7.3pt;line-height:1.35;color:var(--sub);border-top:1px solid var(--line);padding-top:6px;margin-top:10px;break-inside:avoid}
   .cond{grid-template-columns:230px 1fr;padding:10px 14px;margin-bottom:8px}
   .principal .v{font-size:22pt}
   .tbl-wrap{overflow:visible}
@@ -292,13 +292,20 @@ tr.tot td{background:var(--band);border-top:2px solid var(--line)}
   .two h3{font-size:11pt}
   .chartbox{height:auto;padding:4px;border:1px solid var(--line)}
   .chartbox canvas{display:none!important}
-  #mchartImg{display:block;max-height:56mm;object-fit:contain}
+  #mchartImg{display:block;max-height:48mm;object-fit:contain}
   .cinfo{gap:4px 14px}
   .cinfo dt{font-size:9pt;white-space:nowrap}
   .cinfo dd{font-size:9.5pt;text-align:right}
   .print-head{margin-bottom:8px}
   .card .k{font-size:9pt}
-  .msum td,.msum th{font-size:8pt;padding:2px 5px!important}
+  .msum td,.msum th{font-size:8pt;padding:1px 5px!important;line-height:1.25}
+  .msum .dot{width:8px;height:8px}
+  table.comp{font-size:8.3pt}
+  table.comp td,table.comp th{padding:3px 5px!important}
+  table.comp td.first .na{display:none}
+  table.comp td .na{font-size:7.5pt}
+  table.comp td.first{white-space:nowrap}
+  table.comp td[data-label="과표 근거"]{font-size:7.5pt}
   .detail{display:none}
   body.with-detail .detail{display:block;break-before:page}
   body.with-detail .detail summary{list-style:none}
@@ -716,16 +723,17 @@ function calculate(){
         <div style="grid-column:1/-1"><dt>국내주식형 과표 추정 기준</dt><dd>${MODE_TXT()}</dd></div>
       </dl>
     </section>
-    <div class="tbl-wrap"><table class="rt comp" style="min-width:860px">
-      <thead><tr><th class="l">구성 ETF</th><th>비율</th><th>매수 수량</th><th>실제 매수액</th><th>분배율(12개월)</th><th>예상 분배금(세전)</th><th class="l">과표 근거</th></tr></thead>
-      <tbody>${items.map(it => { const fs = flows.filter(f => f.it === it), g = fs.reduce((a,f)=>a+f.gross,0);
+    <div class="tbl-wrap"><table class="rt comp" style="min-width:940px">
+      <thead><tr><th class="l">구성 ETF</th><th>비율</th><th>매수 수량</th><th>실제 매수액</th><th>분배율(12개월)</th><th>예상 분배금(세전)</th><th>예상 과표</th><th class="l">과표 근거</th></tr></thead>
+      <tbody>${items.map(it => { const fs = flows.filter(f => f.it === it), g = fs.reduce((a,f)=>a+f.gross,0), tx = fs.reduce((a,f)=>a+f.taxable,0);
         return `<tr><td class="l first" data-label="ETF"><span class="dot" style="background:${it.color}"></span><b>${esc(it.e.name)}</b> <span class="na">${esc(it.e.code)} · ${CYC_TXT[cycle(it.e)]} 분배</span></td>
           <td data-label="비율"><b>${it.w}%</b></td><td data-label="매수 수량">${it.qty.toLocaleString("ko-KR")}주 <span class="na">@${won(it.e.price)}</span></td>
           <td data-label="실제 매수액">${won(it.invested)}</td><td data-label="분배율(12개월)">${pctTxt(it.e.yield12)}</td>
           <td data-label="예상 분배금(세전)"><b>${won(g)}</b> <span class="na">${fs.length}회</span></td>
+          <td data-label="예상 과표"><b>${won(tx)}</b> <span class="na">${g ? Math.round(tx/g*100) + "%" : ""}</span></td>
           <td class="l" data-label="과표 근거">${(t => t.kind === "공시" ? "운용사 공시 " + Math.round(t.ratio*100) + "%" : t.kind === "추정" ? `배당률 ${(t.rate*100).toFixed(2)}% 기준 ≈${Math.round(t.ratio*100)}%` : t.kind === "일반" ? "일반 국내주식형 → 전액" : '<span class="na">미공개 → 전액(상한)</span>')(taxInfo(it.e))}</td></tr>`; }).join("")}
         <tr class="tot"><td class="l first" data-label="합계"><b>합계</b></td><td data-label="비율"><b>${state.sel.reduce((a,s)=>a+s.w,0).toFixed(1)}%</b></td><td class="hide-m"></td>
-          <td data-label="실제 매수액"><b>${won(invested)}</b></td><td data-label="가중 분배율"><b>${rate(G, invested)}</b></td><td data-label="예상 분배금(세전)"><b>${won(G)}</b></td><td class="hide-m"></td></tr>
+          <td data-label="실제 매수액"><b>${won(invested)}</b></td><td data-label="가중 분배율"><b>${rate(G, invested)}</b></td><td data-label="예상 분배금(세전)"><b>${won(G)}</b></td><td data-label="예상 과표"><b>${won(T)}</b> <span class="na">${G ? Math.round(T/G*100) + "%" : ""}</span></td><td class="hide-m"></td></tr>
       </tbody></table></div>
 
     <div class="cards">
