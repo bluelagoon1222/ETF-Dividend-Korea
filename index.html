@@ -123,6 +123,9 @@ aside .ft{padding:14px 18px 18px;border-top:1px solid var(--line);background:var
 .btn.sec{background:#fff;border:1.5px solid var(--line);font-size:14px;padding:10px 12px}
 .btn.pri{background:var(--orange);color:#fff;font-size:18px;flex:1}
 .btn.pri:disabled{background:#F7B48A;cursor:not-allowed}
+.taxsel{display:block;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px}
+.taxsel select{display:block;width:100%;margin-top:4px;border:1.5px solid var(--line);border-radius:6px;padding:7px 8px;font-size:14px;background:#fff}
+.est{color:var(--navy);font-weight:700;border-bottom:1px dotted var(--navy)}
 .msg{font-size:13.5px;color:var(--orange-ink);margin-top:8px;min-height:1em}
 
 /* mobile bottom bar */
@@ -408,6 +411,13 @@ function init(){
       <div class="hd"><h2 id="h-sel" style="font-size:19px;margin:0"><span class="step">3</span>담은 ETF와 비율</h2></div>
       <div class="bd" id="selList"></div>
       <div class="ft">
+        <label class="taxsel">국내주식형 과표 추정 기준
+          <select id="taxMode">
+            <option value="mkt">코스피200 실측 배당률 (기본)</option>
+            <option value="krx">KRX 평균 시가배당률 2.63%</option>
+            <option value="cap">분배금 전액 (가장 보수적)</option>
+          </select>
+        </label>
         <div class="sum"><span>비율 합계</span><span id="wsum">0%</span></div>
         <div class="btnrow">
           <button class="btn sec" id="eq">균등 배분</button>
@@ -425,7 +435,7 @@ function init(){
       <dt>1년 수익률</dt><dd>FunETF 제공 NAV 기준 1년 수익률로, 분배금을 재투자한다고 가정한 세전 수익률입니다(분배금 포함).</dd>
       <dt>분배 주기</dt><dd>최근 지급기준일 사이 간격으로 판정합니다. 최근에 분배 방식이 바뀐 ETF는 바뀐 주기 기준으로 표시됩니다.</dd>
       <dt>분배 일정 <span class="lbl e">추정</span></dt><dd>월·분기·반기·연 분배 ETF는 가장 최근 지급기준일 패턴(예: 매월 말일, 매월 15일)을 그대로 이어 12개월 일정을 만듭니다. 금액은 1년 전 같은 회차 금액(‘전년 패턴 추정’), 없으면 최근 회차 평균(‘주기 기반 추정’)을 씁니다. 이미 공시된 다음 회차는 공시 일정을 쓰고, 오늘 이전 기준일 회차는 지금 사도 받을 수 없어 제외합니다. 지급일은 기준일 후 같은 영업일 간격으로 추정합니다.</dd>
-      <dt>과표 <span class="lbl e">추정</span></dt><dd>운용사가 회차별 과세표준을 공개한 ETF는 실제 비율(과표÷분배금)을, 공개하지 않은 ETF는 분배금 전액을 과표로 봅니다. 세법상 과표는 분배금을 넘지 않으므로 이 경우 <b>상한값</b>입니다.</dd>
+      <dt>과표 <span class="lbl e">추정</span></dt><dd>① 운용사가 회차별 과세표준을 공개한 ETF(KODEX 등)는 실제 비율을 씁니다. ② 공개하지 않은 <b>국내주식형 중 커버드콜이거나 분배율 6% 초과</b> ETF는 분배금 대부분이 비과세(주식 매매차익·옵션 프리미엄)이고 배당 수입만 과세되므로 <b>현재가 × 배당률</b>을 연간 과표로 봅니다(분배금을 넘지 않음). 배당률은 기본 <b>코스피200 실측</b>(KODEX 200 최근 12개월 공시 과표 ÷ 현재가), 이름에 고배당·금융·은행 등이 들어간 ETF는 <b>고배당·금융형 실측 중앙값</b>을 씁니다. ③ 그 밖의 일반 국내주식형은 분배금이 대부분 배당이라 전액을 과표로 봅니다(KODEX 공시 사례 90~100%). ④ 해외·채권·리츠 등은 분배금 전액(<b>상한값</b>)입니다.</dd>
       <dt>원천징수</dt><dd>과표 × 15.4%(지방소득세 포함). 연금·ISA 계좌는 적용되지 않습니다.</dd>
       <dt>금융소득종합과세</dt><dd>연간 금융소득 합계가 2,000만원을 넘으면 종합과세 대상입니다. 다른 금융소득(예금 이자 등)을 더해 판단해야 합니다.</dd>
     </dl>
@@ -438,6 +448,9 @@ function init(){
   $("#q").addEventListener("input", e => { state.q = e.target.value.trim(); renderList(); });
   $("#eq").onclick = () => { equalize(); renderSel(); };
   $("#calc").onclick = calculate;
+  const mk = mktRate(); const opt = document.querySelector('#taxMode option[value="mkt"]');
+  if (mk != null) opt.textContent = `코스피200 실측 배당률 ${(mk*100).toFixed(2)}% (기본)`; else { opt.disabled = true; taxMode = "krx"; $("#taxMode").value = "krx"; }
+  $("#taxMode").onchange = e => { taxMode = e.target.value; renderList(); if (!$("#result").hidden) calculate(); };
   $("#mbarCalc").onclick = calculate;
   $("#mbarEdit").onclick = () => $("#panel").scrollIntoView({behavior:"smooth", block:"start"});
   renderControls(); renderList(); renderSel();
@@ -475,7 +488,57 @@ function rows(){
 }
 
 function tagsHTML(e){ return (e.covered_call ? '<span class="tag cc">커버드콜</span>' : "") + (e.short_history ? '<span class="tag new">이력 1년 미만</span>' : ""); }
-function taxCell(e){ return e.tax_ratio == null ? '<span class="na" title="운용사 미공개: 분배금 전액을 과표로 계산(상한)">미공개</span>' : pctTxt(e.tax_ratio, 0); }
+/* ---------- taxable-amount model ----------
+   1) issuer-published per-share taxable amount (KODEX etc.)                    -> "공시"
+   2) Korean-equity ETFs (no disclosure)
+      a) covered-call or distribution yield > 6%: distributions are mostly tax-exempt
+         equity gains / option premium -> annual taxable ~= price x dividend yield  -> "추정"
+         (dividend yield = KOSPI200 measured, or high-dividend group measured for 고배당·금융)
+      b) ordinary equity ETFs: distribution ~= dividends received -> whole amount    -> "일반"
+   3) everything else (overseas, bond, REIT ...): whole distribution (upper bound)  -> "상한" */
+const KRX_DIV = 0.0263;   // KRX: 2025 KOSPI common-stock simple-average dividend yield (2026-04-20)
+const HIGH_YIELD_CUT = 0.06;
+const EQ_EXC = /리츠|부동산|인프라|채권|혼합|금리|머니마켓|CD|KOFR|단기|국채|회사채|TDF|TRF|달러|골드|금현물/;
+const HIGH_NAME = /고배당|금융|은행|증권|보험|배당다우존스|배당가치|주주환원/;
+let taxMode = "mkt";      // mkt | krx | cap
+function isDomEq(e){
+  return e.cat === "domestic" && !EQ_EXC.test(e.name) && !/^(해외지수|채권|통화|상품)/.test(e.seibro_type || "");
+}
+const ttmTax = e => { const asof = ymd(D.asof), st = new Date(asof); st.setFullYear(st.getFullYear()-1);
+  const r = e.hist.filter(h => ymd(h[0]) > st && ymd(h[0]) <= asof); return (r.length && r.every(h => h[3] != null)) ? r.reduce((a,h) => a + h[3], 0) : null; };
+let _mkt, _high;
+function mktRate(){                 /* KODEX 200: published taxable amount over 12 months / price */
+  if (_mkt !== undefined) return _mkt;
+  const k = D.etfs.find(e => e.code === "069500"), t = k ? ttmTax(k) : null;
+  return _mkt = (t != null && k.price) ? t / k.price : null;
+}
+function highRate(){                /* median measured taxable yield of published high-dividend equity ETFs */
+  if (_high !== undefined) return _high;
+  const v = D.etfs.filter(e => isDomEq(e) && !e.covered_call && HIGH_NAME.test(e.name) && e.price)
+    .map(e => { const t = ttmTax(e); return t != null ? t / e.price : null; }).filter(x => x != null && x > 0).sort((a,b) => a-b);
+  return _high = v.length >= 3 ? v[Math.floor(v.length/2)] : 0.034;
+}
+function baseRate(){ return taxMode === "krx" ? KRX_DIV : mktRate() ?? KRX_DIV; }
+function taxInfo(e){
+  if (e.tax_ratio != null) return {ratio: e.tax_ratio, kind: "공시"};
+  if (!isDomEq(e) || taxMode === "cap" || !(e.dist12 > 0 && e.price > 0)) return {ratio: 1, kind: "상한"};
+  const y = e.dist12 / e.price;
+  if (e.covered_call || y > HIGH_YIELD_CUT){
+    const high = HIGH_NAME.test(e.name), rate = high ? Math.max(highRate(), taxMode === "krx" ? KRX_DIV : 0) : baseRate();
+    return {ratio: Math.min(1, rate / y), kind: "추정", rate, high};
+  }
+  return {ratio: 1, kind: "일반"};
+}
+const MODE_TXT = () => taxMode === "cap" ? "분배금 전액" :
+  `${taxMode === "krx" ? `KRX 평균 시가배당률 ${(KRX_DIV*100).toFixed(2)}%` : `코스피200 실측 ${(mktRate()*100).toFixed(2)}%`} · 고배당·금융형 ${(Math.max(highRate(), taxMode === "krx" ? KRX_DIV : 0)*100).toFixed(2)}%`;
+function taxCell(e){
+  const t = taxInfo(e);
+  if (t.kind === "공시") return pctTxt(t.ratio, 0);
+  if (t.kind === "추정") return `<span class="est" title="국내주식형 커버드콜·고분배: 현재가 × ${(t.rate*100).toFixed(2)}%(${t.high ? "고배당·금융형 실측" : "시장 배당"})를 연간 과표로 추정">≈${Math.round(t.ratio*100)}%</span>`;
+  if (t.kind === "일반") return '<span title="일반 국내주식형: 분배금 대부분이 배당이라 전액을 과표로 계산">100%<small class="na"> 일반</small></span>';
+  return '<span class="na" title="운용사 미공개: 분배금 전액을 과표로 계산(상한)">미공개</span>';
+}
+function taxShort(e){ const t = taxInfo(e); return t.kind === "공시" ? Math.round(t.ratio*100) + "%" : t.kind === "추정" ? "≈" + Math.round(t.ratio*100) + "% 추정" : t.kind === "일반" ? "100% (일반)" : "미공개"; }
 
 function renderList(){
   const all = rows(), top = all.slice(0, 30), selSet = new Set(state.sel.map(s => s.code));
@@ -499,7 +562,7 @@ function renderList(){
         <div><span>1년(분배 포함)</span><b>${retTxt(e.ret1y)}</b></div>
         <div><span>분배 주기</span><b>${CYC_TXT[cycle(e)]}</b></div>
       </div>
-      <div class="ft2"><span>현재가 ${won(e.price)} · 12개월 분배금 ${won(e.dist12)}</span><span>과표 ${e.tax_ratio == null ? "미공개" : Math.round(e.tax_ratio*100) + "%"}</span></div>
+      <div class="ft2"><span>현재가 ${won(e.price)} · 12개월 분배금 ${won(e.dist12)}</span><span>과표 ${taxShort(e)}</span></div>
     </div>`).join("") || `<div class="empty-sel">조건에 맞는 ETF가 없습니다.</div>`;
   $("#listNote").textContent = `조건에 맞는 ${all.length}개 중 상위 ${top.length}개 표시. 검색하면 전체에서 찾습니다.`;
   document.querySelectorAll("#etfTable tbody tr[data-c], #etfCards .ecard[data-c]").forEach(el => {
@@ -599,8 +662,7 @@ function calculate(){
     const gross = ev.amt * it.qty;
     let taxable, tb;
     if (ev.tax != null){ taxable = ev.tax * it.qty; tb = "공시"; }
-    else if (it.e.tax_ratio != null){ taxable = gross * it.e.tax_ratio; tb = "공시비율"; }
-    else { taxable = gross; tb = "상한"; }
+    else { const t = taxInfo(it.e); taxable = gross * t.ratio; tb = t.kind === "공시" ? "공시비율" : t.kind; }
     const wh = Math.floor(taxable * TAX_RATE / 10) * 10;
     flows.push({it, ev, gross, taxable, tb, wh, net: gross - wh, m: mkey(ev.pay)});
   }));
@@ -608,7 +670,7 @@ function calculate(){
   const sum = k => flows.reduce((a,f) => a + f[k], 0);
   const G = sum("gross"), T = sum("taxable"), W = sum("wh"), N = sum("net");
   const invested = items.reduce((a,i) => a + i.invested, 0);
-  const anyUpper = flows.some(f => f.tb === "상한");
+  const anyUpper = flows.some(f => f.tb === "상한"), anyEst = flows.some(f => f.tb === "추정");
   const usedMonths = months.filter(m => flows.some(f => f.m === m));
   const rate = (a, b) => b ? (a / b * 100).toFixed(2) + "%" : "—";
   const BASIS = {a:"공시 일정", p:"전년 패턴 추정", c:"주기 기반 추정"};
@@ -651,6 +713,7 @@ function calculate(){
         <div><dt>미매수 잔액(현금)</dt><dd>${won(total - invested)}</dd></div>
         <div><dt>매수 가정 시점</dt><dd>${fmtD(asof)} 현재가</dd></div>
         <div><dt>분배금 계산 기간</dt><dd>${fmtD(asof)} ~ ${fmtD(end)}</dd></div>
+        <div style="grid-column:1/-1"><dt>국내주식형 과표 추정 기준</dt><dd>${MODE_TXT()}</dd></div>
       </dl>
     </section>
     <div class="tbl-wrap"><table class="rt comp" style="min-width:860px">
@@ -660,7 +723,7 @@ function calculate(){
           <td data-label="비율"><b>${it.w}%</b></td><td data-label="매수 수량">${it.qty.toLocaleString("ko-KR")}주 <span class="na">@${won(it.e.price)}</span></td>
           <td data-label="실제 매수액">${won(it.invested)}</td><td data-label="분배율(12개월)">${pctTxt(it.e.yield12)}</td>
           <td data-label="예상 분배금(세전)"><b>${won(g)}</b> <span class="na">${fs.length}회</span></td>
-          <td class="l" data-label="과표 근거">${it.e.tax_ratio != null ? "공시 비율 " + Math.round(it.e.tax_ratio*100) + "%" : '<span class="na">미공개 → 전액(상한)</span>'}</td></tr>`; }).join("")}
+          <td class="l" data-label="과표 근거">${(t => t.kind === "공시" ? "운용사 공시 " + Math.round(t.ratio*100) + "%" : t.kind === "추정" ? `배당률 ${(t.rate*100).toFixed(2)}% 기준 ≈${Math.round(t.ratio*100)}%` : t.kind === "일반" ? "일반 국내주식형 → 전액" : '<span class="na">미공개 → 전액(상한)</span>')(taxInfo(it.e))}</td></tr>`; }).join("")}
         <tr class="tot"><td class="l first" data-label="합계"><b>합계</b></td><td data-label="비율"><b>${state.sel.reduce((a,s)=>a+s.w,0).toFixed(1)}%</b></td><td class="hide-m"></td>
           <td data-label="실제 매수액"><b>${won(invested)}</b></td><td data-label="가중 분배율"><b>${rate(G, invested)}</b></td><td data-label="예상 분배금(세전)"><b>${won(G)}</b></td><td class="hide-m"></td></tr>
       </tbody></table></div>
@@ -707,12 +770,12 @@ function calculate(){
             fs.map(f => `<tr><td class="l first" data-label="지급 예정일"><span class="dot" style="background:${f.it.color}"></span>${fmtD(f.ev.pay)}<span class="mname"> · ${esc(f.it.e.name)}</span></td>
               <td class="l hide-m" data-label="ETF">${esc(f.it.e.name)}</td>
               <td data-label="주당 분배금">${won(f.ev.amt)}</td><td data-label="수량">${f.it.qty.toLocaleString("ko-KR")}주</td><td data-label="세전">${won(f.gross)}</td>
-              <td data-label="과표">${won(f.taxable)}${f.tb === "상한" ? ' <span class="na">(상한)</span>' : ""}</td><td data-label="원천징수">${won(f.wh)}</td><td data-label="세후"><b>${won(f.net)}</b></td>
+              <td data-label="과표">${won(f.taxable)}${f.tb === "상한" ? ' <span class="na">(상한)</span>' : f.tb === "추정" ? ' <span class="na">(추정)</span>' : ""}</td><td data-label="원천징수">${won(f.wh)}</td><td data-label="세후"><b>${won(f.net)}</b></td>
               <td class="l" data-label="일정 근거"><span class="basis ${f.ev.basis}">${BASIS[f.ev.basis]}</span></td></tr>`).join("");
         }).join("") || `<tr><td colspan="9" class="l na" style="padding:24px">향후 12개월 안에 예상되는 분배가 없습니다.</td></tr>`}</tbody>
       </table></div>
     </details>
-    <div class="print-foot">본 자료는 공개 데이터(SEIBro 분배 내역, 네이버 금융 시세, FunETF 과세표준)를 바탕으로 한 <b>추정 시뮬레이션</b>이며 투자 권유가 아닙니다. 미래 분배금은 최근 지급 실적을 이어 붙인 추정치로 실제와 다를 수 있습니다. 과표 ‘상한’은 운용사 미공개로 분배금 전액을 과표로 본 값입니다. 원천징수 15.4%는 일반 과세계좌 기준이며, 금융소득종합과세 여부는 다른 금융소득을 합산해 판단해야 합니다.</div>`;
+    <div class="print-foot">본 자료는 공개 데이터(SEIBro 분배 내역, 네이버 금융 시세, FunETF 과세표준)를 바탕으로 한 <b>추정 시뮬레이션</b>이며 투자 권유가 아닙니다. 미래 분배금은 최근 지급 실적을 이어 붙인 추정치로 실제와 다를 수 있습니다. 과표 ‘추정’은 국내주식형에 현재가 × 국내 증시 평균배당률을 적용한 값, ‘상한’은 운용사 미공개로 분배금 전액을 과표로 본 값입니다. 원천징수 15.4%는 일반 과세계좌 기준이며, 금융소득종합과세 여부는 다른 금융소득을 합산해 판단해야 합니다.</div>`;
 
   $("#custName").value = prevCust; $("#author").value = prevAuthor; $("#withDetail").checked = prevDetail; refreshPrintHead();
   $("#btnPdf").onclick = () => { document.body.classList.toggle("with-detail", $("#withDetail").checked); refreshPrintHead(); preparePrint(); setTimeout(() => window.print(), 50); };
