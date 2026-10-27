@@ -203,11 +203,17 @@ footer{margin-top:40px;padding:22px 0 36px;background:var(--band);font-size:13.5
   .rt thead{display:none}
   .rt, .rt tbody, .rt tr, .rt td{display:block;width:100%}
   .rt{min-width:0!important}
-  .rt tr{border-bottom:1px solid var(--line);padding:8px 2px;display:grid;grid-template-columns:1fr 1fr;column-gap:14px}
-  .rt td{border:0;padding:3px 2px;display:flex;justify-content:space-between;gap:8px;text-align:right;white-space:normal;font-size:14.5px}
+  .rt tr{border-bottom:1px solid var(--line);padding:8px 2px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:14px}
+  table.comp tr{grid-template-columns:minmax(0,1fr)}
+  table.comp td.first{display:block;text-align:left}
+  table.comp td.first .na{display:block;font-size:12.5px;margin-top:2px}
+  .rt td{border:0;padding:3px 2px;display:flex;justify-content:space-between;gap:8px;text-align:right;white-space:normal;font-size:14.5px;min-width:0;flex-wrap:wrap}
   .rt td.first{grid-column:1 / -1}
   .rt td[data-label="일정 근거"],.rt td[data-label="과표 근거"]{grid-column:1 / -1}
-  .rt td::before{content:attr(data-label);color:var(--sub);font-size:13px;text-align:left;flex:none}
+  .rt td::before{content:attr(data-label);color:var(--sub);font-size:13px;text-align:left;flex:none;margin-right:auto}
+  .rt td{justify-content:flex-end!important;gap:6px!important}
+  .rt td.first{justify-content:flex-start!important}
+  .rt tr.month-h td{justify-content:space-between!important}
   .rt td.first{font-weight:800;font-size:16px;justify-content:flex-start}
   .rt td.first::before{display:none}
   .rt td.hide-m{display:none}
@@ -266,52 +272,50 @@ tr.tot td{background:var(--band);border-top:2px solid var(--line)}
   .two{grid-template-columns:1fr}
   table.comp tr.tot{background:var(--band)}
 }
+/* ---------- print report (separate layout used only for PDF) ---------- */
+#printReport{display:none}
 @media print{
-  @page{size:A4;margin:9mm 9mm}
+  @page{size:A4;margin:10mm 10mm 9mm}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  html,body{font-size:10.5pt;background:#fff}
-  body{padding:0!important}
-  header,.amount,.grid,.notes,.mbar,footer,.actions,.actions2,.rhead,.sharednote{display:none!important}
-  .wrap{max-width:none;padding:0}
-  #result{padding:0}
-  .print-head{display:block;border-bottom:3px solid var(--orange);padding-bottom:6px;margin-bottom:10px}
-  .print-head .ph-t{font-size:18pt;font-weight:800;color:var(--navy)}
-  .print-head .ph-m{font-size:9.5pt;color:var(--sub)}
-  .print-foot{display:block;font-size:7.3pt;line-height:1.35;color:var(--sub);border-top:1px solid var(--line);padding-top:6px;margin-top:10px;break-inside:avoid}
-  .cond{grid-template-columns:230px 1fr;padding:10px 14px;margin-bottom:8px}
-  .principal .v{font-size:22pt}
-  .tbl-wrap{overflow:visible}
-  table{min-width:0!important;font-size:9pt}
-  th,td{padding:4px 6px!important;white-space:normal}
-  .rt thead{display:table-header-group}
-  .cards{grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}
-  .card{padding:8px 10px;break-inside:avoid}
-  .card .v{font-size:15pt}.card .r{font-size:12pt}.card .s{font-size:8.5pt}
-  .gauge{padding:6px 12px;margin-bottom:6px;break-inside:avoid}
-  .gauge .bar{height:12px;margin:6px 0 4px}
-  .two{grid-template-columns:1.35fr 1fr;gap:10px;break-inside:avoid;margin-top:4px}
-  .two h3{font-size:11pt}
-  .chartbox{height:auto;padding:4px;border:1px solid var(--line)}
-  .chartbox canvas{display:none!important}
-  #mchartImg{display:block;max-height:48mm;object-fit:contain}
-  .cinfo{gap:4px 14px}
-  .cinfo dt{font-size:9pt;white-space:nowrap}
-  .cinfo dd{font-size:9.5pt;text-align:right}
-  .print-head{margin-bottom:8px}
-  .card .k{font-size:9pt}
-  .msum td,.msum th{font-size:8pt;padding:1px 5px!important;line-height:1.25}
-  .msum .dot{width:8px;height:8px}
-  table.comp{font-size:8.3pt}
-  table.comp td,table.comp th{padding:3px 5px!important}
-  table.comp td.first .na{display:none}
-  table.comp td .na{font-size:7.5pt}
-  table.comp td.first{white-space:nowrap}
-  table.comp td[data-label="과표 근거"]{font-size:7.5pt}
-  .detail{display:none}
-  body.with-detail .detail{display:block;break-before:page}
-  body.with-detail .detail summary{list-style:none}
-  tr{break-inside:avoid}
+  html,body{background:#fff;font-size:9pt;padding:0!important;margin:0}
+  body > *:not(#printReport){display:none!important}
+  #printReport{display:block}
 }
+.rp{font-family:var(--font);color:var(--ink);font-size:9pt;line-height:1.4;word-break:keep-all}
+.rp-head{display:flex;justify-content:space-between;align-items:center;gap:16px;background:var(--navy);color:#fff;border-bottom:3px solid var(--orange);padding:9px 12px}
+.rp-head > div{flex:1;min-width:0}
+.rp-t{font-size:15pt;font-weight:800;line-height:1.2;white-space:nowrap}
+.rp-s{font-size:8.5pt;color:#C9D6EA;margin-top:2px}
+.rp-meta{border-collapse:collapse;font-size:8pt;color:#fff;flex:none;width:auto}
+.rp-meta th{color:#C9D6EA;font-weight:400;text-align:left;padding:0 10px 1px 0;white-space:nowrap;background:none;border:0;font-size:8pt}
+.rp-meta td{text-align:right;font-weight:700;padding:0;white-space:nowrap;border:0}
+.rp h3{font-size:10.5pt;font-weight:800;color:var(--navy);margin:11px 0 5px;padding-left:7px;border-left:4px solid var(--orange);line-height:1.25}
+.rp table.t{border-collapse:collapse;width:calc(100% - 1px);font-size:8.3pt;table-layout:fixed}
+.rp table.t th,.rp table.t td{border:1px solid #D5DAE1;padding:3px 5px;vertical-align:middle;white-space:normal;text-align:right}
+.rp table.t td.nw,.rp table.t th.nw{white-space:nowrap}
+.rp table.m td,.rp table.m th{padding:1.6px 5px;font-size:7.9pt}
+.rp table.s4 tr.cmp td{font-size:8.3pt;font-weight:400}
+.rp table.t th{background:var(--band);color:var(--sub);font-weight:700;font-size:8pt}
+.rp table.t .l{text-align:left}
+.rp table.t tr.tot td,.rp table.t tr.tot th{background:#EEF2F7;font-weight:800;color:var(--ink)}
+.rp table.kv th{text-align:left;width:17%}
+.rp table.kv td{text-align:left;width:33%;font-weight:700}
+.rp table.kv td.big{font-size:12.5pt;color:var(--navy)}
+.rp table.kv td small,.rp table.s4 td small{display:block;font-weight:400;color:var(--sub);font-size:7.8pt}
+.rp table.s4 td{font-size:9.5pt;font-weight:800}
+.rp table.s4 tr.amt td{font-size:12pt;color:var(--navy)}
+.rp table.s4 tr.amt td.hl{color:var(--orange-ink)}
+.rp table.s4 th.rowh{text-align:left;width:16%}
+.rp .ok{color:var(--navy)} .rp .warn{color:var(--orange-ink)}
+.rp .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:0}
+.rp .code{color:var(--sub);font-weight:400;font-size:7.5pt}
+.rp .two{display:grid;grid-template-columns:58% 1fr;gap:10px;align-items:start}
+.rp .chart{border:1px solid #D5DAE1;padding:4px}
+.rp .chart img{width:100%;display:block}
+.rp .note{margin-top:10px;border-top:1px solid #D5DAE1;padding-top:5px;font-size:7.3pt;color:var(--sub);line-height:1.4}
+.rp .pb{break-before:page}
+.rp tr{break-inside:avoid}
+.rp thead{display:table-header-group}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
@@ -348,7 +352,7 @@ const SORTS = [["yield","분배율 높은순"],["ret","1년 수익률 높은순"
 const PALETTE = ["#F37321","#0B2D5B","#3E7CB1","#E9A23B","#7A8FA6","#B5523B","#2E9C8F","#8C6BB1","#C9A227","#5B6475"];
 const TAX_RATE = 0.154, COMP_LIMIT = 20000000, MAX_SEL = 10;
 
-let D, chart, lastCalc = null, sharedView = false;
+let D, chart, lastCalc = null, lastResult = null, sharedView = false;
 const state = {sort:"yield", q:"", types:{}, freqs:new Set(), sel:[]};
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -697,6 +701,7 @@ function calculate(){
   const monthRows = usedMonths.map(m => { const fs = flows.filter(f => f.m === m);
     return {m, names:[...new Set(fs.map(f => f.it))], g: fs.reduce((a,f)=>a+f.gross,0), w: fs.reduce((a,f)=>a+f.wh,0), n: fs.reduce((a,f)=>a+f.net,0)}; });
   lastCalc = {total, sel: state.sel.map(s => ({code: s.code, w: s.w}))};
+  lastResult = {total, invested, asof, end, items, flows, G, T, W, N, monthRows, months, BASIS};
 
   const prevCust = $("#custName")?.value || "", prevAuthor = $("#author")?.value || "", prevDetail = $("#withDetail")?.checked || false;
   const R = $("#result"); R.hidden = false;
@@ -751,7 +756,7 @@ function calculate(){
       <div class="card hl"><div class="k">세전 분배금 <span class="lbl e">추정</span></div><div class="v">${man(G)}</div>
         <div class="r">${rate(G, invested)}<small>투자금 대비</small></div><div class="s">${won(G)}</div></div>
       <div class="card"><div class="k">과표 합계 <span class="lbl e">${anyUpper ? "추정·상한 포함" : "추정"}</span></div><div class="v">${man(T)}</div>
-        <div class="r">${rate(T, G)}<small>분배금 대비</small></div><div class="s">${won(T)}</div></div>
+        <div class="r">${rate(T, G)}<small>분배금 대비</small></div><div class="r">${rate(T, total)}<small>원금 대비</small></div><div class="s">${won(T)}</div></div>
       <div class="card"><div class="k">원천징수 <span class="lbl e">추정</span></div><div class="v">${man(W)}</div>
         <div class="r">15.4%<small>과표 대비</small></div><div class="s">${won(W)}</div></div>
       <div class="card"><div class="k">세후 수령액 <span class="lbl e">추정</span></div><div class="v">${man(N)}</div>
@@ -797,7 +802,7 @@ function calculate(){
     <div class="print-foot">본 자료는 공개 데이터(SEIBro 분배 내역, 네이버 금융 시세, FunETF 과세표준)를 바탕으로 한 <b>추정 시뮬레이션</b>이며 투자 권유가 아닙니다. 미래 분배금은 최근 지급 실적을 이어 붙인 추정치로 실제와 다를 수 있습니다. 과표 ‘추정’은 국내주식형에 현재가 × 국내 증시 평균배당률을 적용한 값, ‘상한’은 운용사 미공개로 분배금 전액을 과표로 본 값입니다. 원천징수 15.4%는 일반 과세계좌 기준이며, 금융소득종합과세 여부는 다른 금융소득을 합산해 판단해야 합니다.</div>`;
 
   $("#custName").value = prevCust; $("#author").value = prevAuthor; $("#withDetail").checked = prevDetail; refreshPrintHead();
-  $("#btnPdf").onclick = () => { document.body.classList.toggle("with-detail", $("#withDetail").checked); refreshPrintHead(); preparePrint(); setTimeout(() => window.print(), 50); };
+  $("#btnPdf").onclick = () => { buildReport(); setTimeout(() => window.print(), 80); };
   $("#btnShare").onclick = share;
   ["#custName","#author"].forEach(sel => $(sel).addEventListener("input", refreshPrintHead));
   if (chart) chart.destroy();
@@ -817,8 +822,95 @@ function refreshPrintHead(){
   const c = $("#custName").value.trim(), a = $("#author").value.trim(), asof = ymd(D.asof);
   $(".print-head .ph-m").innerHTML = (c ? `고객: <b>${esc(c)}</b> · ` : "") + `작성일 ${fmtD(new Date())} · 시세·분배 데이터 기준일 ${fmtD(asof)}` + (a ? ` · 작성: ${esc(a)}` : "");
 }
-function preparePrint(){ if (chart){ $("#mchartImg").src = chart.toBase64Image("image/png", 1); } }
-window.addEventListener("beforeprint", preparePrint);
+function preparePrint(){ buildReport(); }
+window.addEventListener("beforeprint", () => { if (lastResult && !$("#printReport").dataset.fresh) buildReport(); });
+window.addEventListener("afterprint", () => { delete $("#printReport").dataset.fresh; });
+
+/* fixed-size chart image for the PDF (independent of screen width) */
+function reportChart(r){
+  const cv = document.createElement("canvas"); cv.width = 1000; cv.height = 470;
+  const c = new Chart(cv, { type:"bar",
+    data:{ labels: r.months.map(m => `${m.slice(2,4)}.${m.slice(4)}`),
+      datasets: r.items.map(it => ({ label: it.e.name, backgroundColor: it.color, maxBarThickness: 46,
+        data: r.months.map(m => r.flows.filter(f => f.it === it && f.m === m).reduce((a,f) => a + f.gross, 0)) })) },
+    options:{ responsive:false, animation:false, devicePixelRatio:2,
+      plugins:{ legend:{ position:"bottom", labels:{ boxWidth:14, font:{ size:17 } } } },
+      scales:{ x:{ stacked:true, grid:{display:false}, ticks:{ font:{ size:16 } } },
+               y:{ stacked:true, ticks:{ callback: v => man(v), font:{ size:16 } }, grid:{ color:"#E3E6EB" } } } } });
+  const url = c.toBase64Image("image/png", 1); c.destroy(); return url;
+}
+
+function buildReport(){
+  const r = lastResult; if (!r) return;
+  let box = $("#printReport");
+  if (!box){ box = document.createElement("div"); box.id = "printReport"; document.body.appendChild(box); }
+  const cust = ($("#custName")?.value || "").trim(), author = ($("#author")?.value || "").trim(), withDetail = $("#withDetail")?.checked;
+  const pct = (a, b) => b ? (a / b * 100).toFixed(2) + "%" : "—";
+  const over = r.T > COMP_LIMIT;
+  const comp = r.items.map(it => { const fs = r.flows.filter(f => f.it === it);
+    return {it, g: fs.reduce((a,f)=>a+f.gross,0), tx: fs.reduce((a,f)=>a+f.taxable,0), n: fs.length}; });
+  const basisTxt = t => t.kind === "공시" ? `운용사 공시 ${Math.round(t.ratio*100)}%` : t.kind === "추정" ? `배당률 ${(t.rate*100).toFixed(2)}% 기준 추정` : t.kind === "일반" ? "일반 국내주식형 전액" : "미공개 → 전액(상한)";
+  const metaRows = [cust ? ["고객", esc(cust)] : null, ["작성일", fmtD(new Date())], ["데이터 기준일", fmtD(r.asof)], author ? ["작성", esc(author)] : null].filter(Boolean);
+  box.innerHTML = `<div class="rp">
+    <div class="rp-head">
+      <div><div class="rp-t">ETF 분배금 시뮬레이션</div><div class="rp-s">국내 상장 ETF · 향후 12개월 분배금 및 과세표준 추정</div></div>
+      <table class="rp-meta">${metaRows.map(([k,v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</table>
+    </div>
+
+    <h3>1. 시뮬레이션 조건</h3>
+    <table class="t kv"><tbody>
+      <tr><th>투자 원금</th><td class="big">${man(r.total)}<small>${won(r.total)}</small></td><th>실제 매수액</th><td>${won(r.invested)}<small>미매수 잔액(현금) ${won(r.total - r.invested)}</small></td></tr>
+      <tr><th>매수 가정 시점</th><td>${fmtD(r.asof)} 현재가</td><th>분배금 계산 기간</th><td>${fmtD(r.asof)} ~ ${fmtD(r.end)}</td></tr>
+      <tr><th>과표 추정 기준</th><td colspan="3">${MODE_TXT()} (국내주식형 커버드콜·고분배 ETF에 적용)</td></tr>
+    </tbody></table>
+
+    <h3>2. 예상 결과 요약 (향후 12개월, 추정)</h3>
+    <table class="t s4">
+      <thead><tr><th class="rowh l">구분</th><th>세전 분배금</th><th>과표 합계</th><th>원천징수 (15.4%)</th><th>세후 수령액</th></tr></thead>
+      <tbody>
+        <tr class="amt"><th class="rowh l">금액</th><td class="hl">${man(r.G)}<small>${won(r.G)}</small></td><td>${man(r.T)}<small>${won(r.T)}</small></td><td>${man(r.W)}<small>${won(r.W)}</small></td><td>${man(r.N)}<small>${won(r.N)}</small></td></tr>
+        <tr><th class="rowh l">원금 대비</th><td>${pct(r.G, r.total)}</td><td>${pct(r.T, r.total)}</td><td>${pct(r.W, r.total)}</td><td>${pct(r.N, r.total)}</td></tr>
+        <tr><th class="rowh l">분배금 대비</th><td>100.00%</td><td>${pct(r.T, r.G)}</td><td>${pct(r.W, r.G)}</td><td>${pct(r.N, r.G)}</td></tr>
+        <tr><th class="rowh l">월평균</th><td>${won(r.G/12)}</td><td>—</td><td>—</td><td>${won(r.N/12)}</td></tr>
+        <tr class="tot cmp"><th class="rowh l">종합과세 기준</th><td colspan="4" class="l">연 금융소득 2,000만원 대비 이 포트폴리오 과표 ${man(r.T)} → ${over ? `<span class="warn">기준 초과 ${man(r.T - COMP_LIMIT)}</span>` : `<span class="ok">기준까지 ${man(COMP_LIMIT - r.T)} 여유</span>`} (예금 이자 등 다른 금융소득 합산 필요)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3. 구성 ETF</h3>
+    <table class="t">
+      <colgroup><col style="width:26%"><col style="width:7%"><col style="width:8%"><col style="width:13%"><col style="width:8%"><col style="width:12.5%"><col style="width:11.5%"><col style="width:14%"></colgroup>
+      <thead><tr><th class="l">ETF</th><th>비율</th><th>수량</th><th>매수액</th><th>분배율<br>(12개월)</th><th>예상 분배금<br>(세전)</th><th>예상 과표</th><th class="l">과표 근거</th></tr></thead>
+      <tbody>${comp.map(c => `<tr><td class="l"><span class="dot" style="background:${c.it.color}"></span><b>${esc(c.it.e.name)}</b> <span class="code">${esc(c.it.e.code)} · ${CYC_TXT[cycle(c.it.e)]}</span></td>
+          <td class="nw">${c.it.w}%</td><td class="nw">${c.it.qty.toLocaleString("ko-KR")}주</td><td class="nw">${won(c.it.invested)}</td><td>${pctTxt(c.it.e.yield12)}</td>
+          <td><b>${won(c.g)}</b></td><td><b>${won(c.tx)}</b></td><td class="l">${basisTxt(taxInfo(c.it.e))}</td></tr>`).join("")}
+        <tr class="tot"><td class="l">합계</td><td class="nw">${r.items.reduce((a,i)=>a+i.w,0).toFixed(1)}%</td><td></td><td class="nw">${won(r.invested)}</td><td>${pct(r.G, r.invested)}</td><td>${won(r.G)}</td><td>${won(r.T)}</td><td class="l">과표/분배금 ${pct(r.T, r.G)}</td></tr>
+      </tbody>
+    </table>
+
+    <h3>4. 월별 입금 예상 (지급 예정월 기준)</h3>
+    <div class="two">
+      <div class="chart"><img src="${reportChart(r)}" alt="월별 분배금 차트"></div>
+      <table class="t m">
+        <colgroup><col style="width:15%"><col style="width:21%"><col style="width:32%"><col style="width:32%"></colgroup>
+        <thead><tr><th class="l">월</th><th class="l">ETF</th><th>세전</th><th>세후</th></tr></thead>
+        <tbody>${r.monthRows.map(m => `<tr><td class="l"><b>${m.m.slice(2,4)}.${m.m.slice(4)}</b></td><td class="l">${m.names.map(it => `<span class="dot" style="background:${it.color}"></span>`).join("")}</td><td>${won(m.g)}</td><td><b>${won(m.n)}</b></td></tr>`).join("")}
+          <tr class="tot"><td class="l" colspan="2">합계</td><td>${won(r.G)}</td><td>${won(r.N)}</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="note">본 자료는 공개 데이터(SEIBro 분배 내역, 네이버 금융 시세, FunETF 과세표준)를 바탕으로 한 <b>추정 시뮬레이션</b>이며 투자 권유가 아닙니다. 미래 분배금은 최근 지급 실적을 이어 붙인 추정치(커버드콜은 최근 3회 평균)로 실제와 다를 수 있습니다. 과표 ‘상한’은 운용사 미공개로 분배금 전액을 과표로 본 값입니다. 원천징수 15.4%는 일반 과세계좌 기준입니다.</div>
+
+    ${withDetail ? `<h3 class="pb">5. 회차별 상세 입금표</h3>
+    <table class="t m">
+      <colgroup><col style="width:10%"><col style="width:24.5%"><col style="width:12.5%"><col style="width:6.5%"><col style="width:6.5%"><col style="width:11%"><col style="width:10.5%"><col style="width:8.5%"><col style="width:10%"></colgroup>
+      <thead><tr><th class="l">지급 예정일</th><th class="l">ETF</th><th class="l">일정 근거</th><th>주당</th><th>수량</th><th>세전</th><th>과표</th><th class="nw">원천징수</th><th>세후</th></tr></thead>
+      <tbody>${r.flows.map(f => `<tr><td class="l nw">${fmtD(f.ev.pay)}</td><td class="l"><span class="dot" style="background:${f.it.color}"></span>${esc(f.it.e.name)}</td><td class="l nw">${r.BASIS[f.ev.basis]}</td>
+        <td class="nw">${won(f.ev.amt)}</td><td class="nw">${f.it.qty.toLocaleString("ko-KR")}</td><td class="nw">${won(f.gross)}</td><td class="nw">${won(f.taxable)}${f.tb === "상한" ? "*" : ""}</td><td class="nw">${won(f.wh)}</td><td class="nw"><b>${won(f.net)}</b></td></tr>`).join("")}
+        <tr class="tot"><td class="l" colspan="5">합계 (${r.flows.length}회) · 과표 옆 * 는 분배금 전액(상한)</td><td class="nw">${won(r.G)}</td><td class="nw">${won(r.T)}</td><td class="nw">${won(r.W)}</td><td class="nw">${won(r.N)}</td></tr></tbody>
+    </table>` : ""}
+  </div>`;
+  box.dataset.fresh = "1";
+}
 
 /* share link: amount + ETF codes + weights only (no customer data) */
 function shareURL(){
