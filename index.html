@@ -226,6 +226,12 @@ body{padding-bottom:86px}
 .sheet-toggle .info small.hint b{font-size:13px}
 .trlink{display:block;margin-top:4px;border:0;background:none;padding:0;color:#D92D20;font-weight:700;font-size:13px;cursor:pointer;text-align:left}
 .trlink:hover{text-decoration:underline}
+/* ---------- numeric alignment: right-aligned, tabular digits, main numbers on the first line ---------- */
+table.comp td,table.msum td,table.dtl td{vertical-align:top;font-variant-numeric:tabular-nums}
+table.comp td:not(.l),table.msum td:not(.l),table.dtl td:not(.l){white-space:nowrap}
+table.dtl .sfx{display:inline-block;width:3.4em;text-align:left;margin-left:3px;font-size:11.5px;color:#98A2B3}
+.cards .card .v,.cards .card .r,.cards .card .s{text-align:right;font-variant-numeric:tabular-nums}
+.cinfo dd{font-variant-numeric:tabular-nums}
 /* tablets: one column (the right panel squeezed the list in landscape) + bottom bar */
 @media (max-width:1199px){
   .grid{grid-template-columns:minmax(0,1fr)}
@@ -357,13 +363,16 @@ tr.tot td{background:var(--band);border-top:2px solid var(--line)}
 .rp table.t{border-collapse:collapse;width:calc(100% - 1px);font-size:8.3pt;table-layout:fixed}
 .rp table.t th,.rp table.t td{border:1px solid #D5DAE1;padding:3px 5px;vertical-align:middle;white-space:normal;text-align:right}
 .rp table.t td.nw,.rp table.t th.nw{white-space:nowrap}
+.rp .sfx{display:inline-block;width:.7em;text-align:left;margin-left:1px}
+.rp table.t td,.rp table.t th{font-variant-numeric:tabular-nums}
 .rp table.m td,.rp table.m th{padding:1.6px 5px;font-size:7.9pt}
 .rp table.s4 tr.cmp td{font-size:8.3pt;font-weight:400}
 .rp table.t th{background:var(--band);color:var(--sub);font-weight:700;font-size:8pt}
 .rp table.t .l{text-align:left}
 .rp table.t tr.tot td,.rp table.t tr.tot th{background:#EEF2F7;font-weight:800;color:var(--ink)}
 .rp table.kv th{text-align:left;width:17%}
-.rp table.kv td{text-align:left;width:33%;font-weight:700}
+.rp table.kv td{text-align:right;width:33%;font-weight:700}
+.rp table.kv td.l{text-align:left}
 .rp table.kv td.big{font-size:12.5pt;color:var(--navy)}
 .rp table.kv td small,.rp table.s4 td small{display:block;font-weight:400;color:var(--sub);font-size:7.8pt}
 .rp table.s4 td{font-size:9.5pt;font-weight:800}
@@ -856,14 +865,14 @@ function calculate(){
       <thead><tr><th class="l">구성 ETF</th><th>비율</th><th>매수 수량</th><th>실제 매수액</th><th>분배율<br>(12개월)</th><th>예상 분배금<br>(세전)</th><th>예상 과표</th><th class="l">과표 근거</th></tr></thead>
       <tbody>${items.map(it => { const fs = flows.filter(f => f.it === it), g = fs.reduce((a,f)=>a+f.gross,0), tx = fs.reduce((a,f)=>a+f.taxable,0);
         return `<tr><td class="l first" data-label="ETF"><span class="dot" style="background:${it.color}"></span><b>${esc(it.e.name)}</b><small class="sub2">${esc(it.e.code)} · ${CYC_TXT[cycle(it.e)]} 분배</small></td>
-          <td data-label="비율"><b>${it.w}%</b></td>
+          <td data-label="비율"><b>${(+it.w).toFixed(1)}%</b></td>
           <td data-label="매수 수량">${it.qty.toLocaleString("ko-KR")}주<small class="sub2 r">@${won(it.e.price)}</small></td>
           <td data-label="실제 매수액">${won(it.invested)}</td><td data-label="분배율(12개월)">${pctTxt(it.e.yield12)}</td>
           <td data-label="예상 분배금(세전)"><b>${won(g)}</b><small class="sub2 r">${fs.length}회</small></td>
-          <td data-label="예상 과표"><b>${won(tx)}</b><small class="sub2 r">분배금의 ${g ? Math.round(tx/g*100) : 0}%</small></td>
+          <td data-label="예상 과표"><b>${won(tx)}</b><small class="sub2 r">분배금의 ${g ? (tx/g*100).toFixed(1) : "0.0"}%</small></td>
           <td class="l basiscell" data-label="과표 근거">${taxBasisText(it, fs)}<button class="trlink" data-c="${esc(it.e.code)}">✎ 과표 수익률 직접 입력</button></td></tr>`; }).join("")}
         <tr class="tot"><td class="l first" data-label="합계"><b>합계</b></td><td data-label="비율"><b>${state.sel.reduce((a,s)=>a+s.w,0).toFixed(1)}%</b></td><td class="hide-m"></td>
-          <td data-label="실제 매수액"><b>${won(invested)}</b></td><td data-label="가중 분배율"><b>${rate(G, invested)}</b></td><td data-label="예상 분배금(세전)"><b>${won(G)}</b></td><td data-label="예상 과표"><b>${won(T)}</b><small class="sub2 r">분배금의 ${G ? Math.round(T/G*100) : 0}%</small></td><td class="hide-m"></td></tr>
+          <td data-label="실제 매수액"><b>${won(invested)}</b></td><td data-label="가중 분배율"><b>${rate(G, invested)}</b></td><td data-label="예상 분배금(세전)"><b>${won(G)}</b></td><td data-label="예상 과표"><b>${won(T)}</b><small class="sub2 r">분배금의 ${G ? (T/G*100).toFixed(1) : "0.0"}%</small></td><td class="hide-m"></td></tr>
       </tbody></table></div>
 
     <div class="cards">
@@ -909,7 +918,7 @@ function calculate(){
               <td class="l hide-m nmcell" data-label="ETF">${esc(f.it.e.name)}</td>
               <td class="net" data-label="세후"><b>${won(f.net)}</b></td>
               <td class="sm" data-label="주당 분배금">${won(f.ev.amt)}</td><td class="sm" data-label="수량">${f.it.qty.toLocaleString("ko-KR")}주</td><td class="sm" data-label="세전">${won(f.gross)}</td>
-              <td class="sm" data-label="과표">${won(f.taxable)}${f.tb === "상한" ? " (상한)" : f.tb === "추정" ? " (추정)" : f.tb === "직접입력" ? " (직접)" : ""}</td><td class="sm" data-label="원천징수">${won(f.wh)}</td></tr>`).join("");
+              <td class="sm" data-label="과표">${won(f.taxable)}<span class="sfx">${f.tb === "상한" ? "(상한)" : f.tb === "추정" ? "(추정)" : f.tb === "직접입력" ? "(직접)" : ""}</span></td><td class="sm" data-label="원천징수">${won(f.wh)}</td></tr>`).join("");
         }).join("") || `<tr><td colspan="8" class="l na" style="padding:24px">향후 12개월 안에 예상되는 분배가 없습니다.</td></tr>`}</tbody>
       </table></div>
     </details>
@@ -981,7 +990,7 @@ function buildReport(){
     <table class="t kv"><tbody>
       <tr><th>투자 원금</th><td class="big">${man(r.total)}<small>${won(r.total)}</small></td><th>실제 매수액</th><td>${won(r.invested)}<small>미매수 잔액(현금) ${won(r.total - r.invested)}</small></td></tr>
       <tr><th>매수 가정 시점</th><td>${fmtD(r.asof)} 현재가</td><th>분배금 계산 기간</th><td>${fmtD(r.asof)} ~ ${fmtD(r.end)}</td></tr>
-      <tr><th>과표 추정 기준</th><td colspan="3">${MODE_TXT()} (국내주식형 커버드콜·고분배 ETF에 적용)</td></tr>
+      <tr><th>과표 추정 기준</th><td colspan="3" class="l">${MODE_TXT()} (국내주식형 커버드콜·고분배 ETF에 적용)</td></tr>
     </tbody></table>
 
     <h3>2. 예상 결과 요약 (향후 12개월, 추정)</h3>
@@ -1001,7 +1010,7 @@ function buildReport(){
       <colgroup><col style="width:26%"><col style="width:7%"><col style="width:8%"><col style="width:13%"><col style="width:8%"><col style="width:12.5%"><col style="width:11.5%"><col style="width:14%"></colgroup>
       <thead><tr><th class="l">ETF</th><th>비율</th><th>수량</th><th>매수액</th><th>분배율<br>(12개월)</th><th>예상 분배금<br>(세전)</th><th>예상 과표</th><th class="l">과표 근거</th></tr></thead>
       <tbody>${comp.map(c => `<tr><td class="l"><span class="dot" style="background:${c.it.color}"></span><b>${esc(c.it.e.name)}</b><span class="code sub2">${esc(c.it.e.code)} · ${CYC_TXT[cycle(c.it.e)]} 분배</span></td>
-          <td class="nw">${c.it.w}%</td><td class="nw">${c.it.qty.toLocaleString("ko-KR")}주</td><td class="nw">${won(c.it.invested)}</td><td>${pctTxt(c.it.e.yield12)}</td>
+          <td class="nw">${(+c.it.w).toFixed(1)}%</td><td class="nw">${c.it.qty.toLocaleString("ko-KR")}주</td><td class="nw">${won(c.it.invested)}</td><td>${pctTxt(c.it.e.yield12)}</td>
           <td><b>${won(c.g)}</b></td><td><b>${won(c.tx)}</b></td><td class="l">${taxBasisText(c.it, r.flows.filter(f => f.it === c.it))}</td></tr>`).join("")}
         <tr class="tot"><td class="l">합계</td><td class="nw">${r.items.reduce((a,i)=>a+i.w,0).toFixed(1)}%</td><td></td><td class="nw">${won(r.invested)}</td><td>${pct(r.G, r.invested)}</td><td>${won(r.G)}</td><td>${won(r.T)}</td><td class="l">과표/분배금 ${pct(r.T, r.G)}</td></tr>
       </tbody>
@@ -1025,7 +1034,7 @@ function buildReport(){
       <colgroup><col style="width:23%"><col style="width:23%"><col style="width:11%"><col style="width:7.5%"><col style="width:6.5%"><col style="width:10.5%"><col style="width:10.5%"><col style="width:8%"></colgroup>
       <thead><tr><th class="l">지급 예정일 (근거)</th><th class="l">ETF</th><th>세후</th><th class="s">주당</th><th class="s">수량</th><th class="s">세전</th><th class="s">과표</th><th class="s nw">원천징수</th></tr></thead>
       <tbody>${r.flows.map(f => `<tr><td class="l nw">${fmtD(f.ev.pay)} <span class="code" style="font-size:6.6pt">(${r.BASIS[f.ev.basis]})</span></td><td class="l"><span class="dot" style="background:${f.it.color}"></span>${esc(f.it.e.name)}</td><td class="nw"><b>${won(f.net)}</b></td>
-        <td class="nw s">${won(f.ev.amt)}</td><td class="nw s">${f.it.qty.toLocaleString("ko-KR")}</td><td class="nw s">${won(f.gross)}</td><td class="nw s">${won(f.taxable)}${f.tb === "상한" ? "*" : ""}</td><td class="nw s">${won(f.wh)}</td></tr>`).join("")}
+        <td class="nw s">${won(f.ev.amt)}</td><td class="nw s">${f.it.qty.toLocaleString("ko-KR")}</td><td class="nw s">${won(f.gross)}</td><td class="nw s">${won(f.taxable)}<span class="sfx">${f.tb === "상한" ? "*" : ""}</span></td><td class="nw s">${won(f.wh)}</td></tr>`).join("")}
         <tr class="tot"><td class="l" colspan="2">합계 (${r.flows.length}회) · 과표 옆 * 는 분배금 전액(상한)</td><td class="nw">${won(r.N)}</td><td></td><td></td><td class="nw">${won(r.G)}</td><td class="nw">${won(r.T)}</td><td class="nw">${won(r.W)}</td></tr></tbody>
     </table>` : ""}
   </div>`;
