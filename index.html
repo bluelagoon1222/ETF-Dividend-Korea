@@ -63,6 +63,13 @@ h2{margin:0 0 6px;font-size:22px;font-weight:800;color:var(--navy)}
 .chip.tri[data-s="in"]::before{content:"✓ "}
 .chip.tri[data-s="out"]{background:#fff;border-color:var(--orange);color:var(--orange-ink);font-weight:700;text-decoration:line-through}
 .chip.tri[data-s="out"]::before{content:"✕ ";text-decoration:none;display:inline-block}
+.seg{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:999px;padding:2px;gap:2px;background:#fff}
+.seg.on{border-color:var(--navy)}
+.seg .chip{border:0;padding:5px 12px}
+.chip.grp[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:700}
+.chip.sub{font-size:14px;color:var(--sub);background:var(--band)}
+.chip.sub[aria-pressed="true"]{background:var(--orange);color:#fff;font-weight:700}
+.check.nocc{margin-left:4px}
 .chip.reset{border-style:dashed;color:var(--sub)}
 .search{border:1.5px solid var(--line);border-radius:6px;padding:8px 12px;width:260px;max-width:100%}
 
@@ -417,7 +424,27 @@ tr.tot td{background:var(--band);border-top:2px solid var(--line)}
 <script>
 /* asset classes (re-derived from the ETF name + SEIBro type; Naver's tab code alone mislabels e.g. REITs as 국내주식) */
 const KLASS = {eq_kr:"국내주식", eq_os:"해외주식", bond_kr:"국내채권", bond_os:"해외채권", mix:"채권혼합", reit:"리츠·부동산", cmdt:"원자재", lev:"레버리지·인버스", etc:"기타"};
-const TYPES = [["eq_kr","국내주식"],["eq_os","해외주식"],["bond_kr","국내채권"],["bond_os","해외채권"],["mix","채권혼합(50:50 등)"],["reit","리츠·부동산"],["cmdt","원자재"],["lev","레버리지·인버스"],["etc","기타"],["cc","커버드콜"]];
+/* filter groups: 커버드콜 / 주식형 / 채권형 have 국내·해외 sub-buttons, the rest are single buttons */
+const GROUPS = [
+  {k:"cc",   t:"커버드콜", sub:true},
+  {k:"eq",   t:"주식형",   sub:true},
+  {k:"bond", t:"채권형",   sub:true},
+  {k:"mix",  t:"채권혼합(50:50 등)"},
+  {k:"reit", t:"리츠·부동산"},
+  {k:"cmdt", t:"원자재"},
+  {k:"lev",  t:"레버리지·인버스"},
+  {k:"etc",  t:"기타"}
+];
+/* region of an ETF: overseas if its class or name points abroad */
+function region(e){ const k = klass(e); return (k === "eq_os" || k === "bond_os" || RX.ovs.test(e.name) || /국제/.test(e.name)) ? "os" : "kr"; }
+function inGroup(e, g){
+  const k = klass(e), sub = state.grp[g.k] || {};
+  const regionOk = () => (!sub.kr && !sub.os) || (sub.kr && region(e) === "kr") || (sub.os && region(e) === "os");
+  if (g.k === "cc")   return !!e.covered_call && regionOk();
+  if (g.k === "eq")   return (k === "eq_kr" || k === "eq_os") && regionOk();
+  if (g.k === "bond") return (k === "bond_kr" || k === "bond_os") && regionOk();
+  return k === g.k;
+}
 const RX = {
   mix:  /혼합|TRF\d|밸런스/,
   lev:  /레버리지|인버스|2X/,
@@ -449,7 +476,7 @@ const PALETTE = ["#F37321","#0B2D5B","#3E7CB1","#E9A23B","#7A8FA6","#B5523B","#2
 const TAX_RATE = 0.154, COMP_LIMIT = 20000000, MAX_SEL = 10;
 
 let D, chart, lastCalc = null, lastResult = null, sharedView = false;
-const state = {sort:"yield", q:"", types:{}, freqs:new Set(), sel:[]};
+const state = {sort:"yield", q:"", grp:{}, noCC:false, freqs:new Set(), sel:[]};
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const won = v => v == null ? "—" : Math.round(v).toLocaleString("ko-KR") + "원";
@@ -503,7 +530,7 @@ function init(){
       <div class="retnote" role="note"><span class="ic">i</span><div><b>1년 수익률은 분배금 포함(재투자 가정) 수익률</b>입니다. NAV(순자산가치) 기준·세전이며 FunETF 집계값입니다. 주가만 본 수익률보다 분배금만큼 높게 나옵니다.</div></div>
       <div class="fgroup" id="sorts" role="group" aria-label="정렬"><span class="flabel">정렬</span></div>
       <div class="fgroup" id="types" role="group" aria-label="유형"><span class="flabel">유형</span></div>
-      <div class="fgroup"><span class="flabel"></span><span class="fhelp">한 번 누르면 <b>포함</b>(여러 개 선택 가능), 두 번 누르면 <b>제외</b>, 세 번 누르면 해제</span></div>
+      <div class="fgroup"><span class="flabel"></span><span class="fhelp">그룹 버튼만 누르면 그룹 <b>전체</b>, 국내·해외를 누르면 <b>해당 지역만</b> · 여러 그룹 동시 선택 가능 · 아무것도 안 누르면 전체 ETF</span></div>
       <div class="fgroup" id="freqs" role="group" aria-label="분배 주기"><span class="flabel">분배 주기</span></div>
       <div class="fgroup"><span class="flabel">검색</span><input class="search" id="q" type="search" placeholder="ETF 이름·코드" aria-label="ETF 검색"></div>
       <div class="tbl-wrap" id="etfTableWrap"><table id="etfTable">
@@ -579,27 +606,38 @@ function init(){
 function renderControls(){
   const lab = t => `<span class="flabel">${t}</span>`;
   $("#sorts").innerHTML = lab("정렬") + SORTS.map(([k,t]) => `<button class="chip sort" aria-pressed="${state.sort===k}" data-k="${k}">${t}</button>`).join("");
-  $("#types").innerHTML = lab("유형") + TYPES.map(([k,t]) => `<button class="chip tri" data-k="${k}" data-s="${state.types[k]||""}" aria-label="${t} ${state.types[k]==="in"?"포함":state.types[k]==="out"?"제외":"선택 안 함"}">${t}</button>`).join("")
-    + (Object.keys(state.types).length ? `<button class="chip reset" id="typeReset">초기화</button>` : "");
+  const on = g => !!state.grp[g.k];
+  $("#types").innerHTML = lab("유형") + GROUPS.map(g => {
+    const st = state.grp[g.k] || {};
+    const main = `<button class="chip grp" aria-pressed="${on(g)}" data-g="${g.k}">${g.t}</button>`;
+    if (!g.sub) return main;
+    return `<span class="seg${on(g) ? " on" : ""}">${main}<button class="chip sub" aria-pressed="${!!st.kr}" data-g="${g.k}" data-r="kr">국내</button><button class="chip sub" aria-pressed="${!!st.os}" data-g="${g.k}" data-r="os">해외</button></span>`;
+  }).join("")
+    + `<label class="check nocc"><input type="checkbox" id="noCC" ${state.noCC ? "checked" : ""}> 커버드콜 제외</label>`
+    + (Object.keys(state.grp).length || state.noCC ? `<button class="chip reset" id="typeReset">초기화</button>` : "");
   $("#freqs").innerHTML = lab("분배 주기") + FREQS.map(([k,t]) => `<button class="chip ms" aria-pressed="${state.freqs.has(k)}" data-k="${k}">${t}</button>`).join("")
     + `<span class="fhelp">여러 개 선택 가능 · 선택 없으면 전체</span>`;
   document.querySelectorAll("#sorts .chip").forEach(b => b.onclick = () => { state.sort = b.dataset.k; renderControls(); renderList(); });
-  document.querySelectorAll("#types .chip.tri").forEach(b => b.onclick = () => {
-    const k = b.dataset.k, s = state.types[k];
-    if (!s) state.types[k] = "in"; else if (s === "in") state.types[k] = "out"; else delete state.types[k];
+  document.querySelectorAll("#types .chip.grp").forEach(b => b.onclick = () => {
+    const k = b.dataset.g;
+    if (state.grp[k]) delete state.grp[k]; else state.grp[k] = {};
     renderControls(); renderList();
   });
-  const rs = $("#typeReset"); if (rs) rs.onclick = () => { state.types = {}; renderControls(); renderList(); };
+  document.querySelectorAll("#types .chip.sub").forEach(b => b.onclick = () => {
+    const k = b.dataset.g, r = b.dataset.r, st = state.grp[k] || (state.grp[k] = {});
+    st[r] = !st[r];
+    renderControls(); renderList();
+  });
+  $("#noCC").onchange = e => { state.noCC = e.target.checked; renderControls(); renderList(); };
+  const rs = $("#typeReset"); if (rs) rs.onclick = () => { state.grp = {}; state.noCC = false; renderControls(); renderList(); };
   document.querySelectorAll("#freqs .chip").forEach(b => b.onclick = () => { const k = b.dataset.k; state.freqs.has(k) ? state.freqs.delete(k) : state.freqs.add(k); renderControls(); renderList(); });
 }
 
-function matchType(e, k){ return k === "cc" ? e.covered_call : bucket(e) === k; }
 function rows(){
   let r = D.etfs.filter(e => e.price > 0);
-  const inc = Object.keys(state.types).filter(k => state.types[k] === "in");
-  const exc = Object.keys(state.types).filter(k => state.types[k] === "out");
-  if (inc.length) r = r.filter(e => inc.some(k => matchType(e, k)));
-  if (exc.length) r = r.filter(e => !exc.some(k => matchType(e, k)));
+  const act = GROUPS.filter(g => state.grp[g.k]);
+  if (act.length) r = r.filter(e => act.some(g => inGroup(e, g)));      // groups are OR-ed
+  if (state.noCC) r = r.filter(e => !e.covered_call);
   if (state.freqs.size) r = r.filter(e => state.freqs.has(cycle(e)));
   if (state.q){ const q = state.q.toLowerCase(); r = r.filter(e => e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q)); }
   const score = e => state.sort === "yield" ? (e.yield12 ?? -1) : state.sort === "ret" ? (e.ret1y ?? -1e9) : (e.aum_eok ?? 0);
