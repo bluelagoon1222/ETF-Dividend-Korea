@@ -188,40 +188,40 @@ table.dtl td.nmcell{white-space:normal;font-weight:700}
 table.dtl .bs{font-size:12px;color:#98A2B3;margin-left:4px;white-space:nowrap}
 table.dtl .bs.r{color:#9A6B00}
 .bsh{font-size:12px;font-weight:400;color:#98A2B3}
-/* ---------- bottom sheet (step 3) ---------- */
-body{padding-bottom:86px}
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;flex-direction:column;align-items:center;pointer-events:none}
-.sheet > *{pointer-events:auto;width:100%;max-width:720px}
-.sheet-body{background:#fff;border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0;
-  box-shadow:0 -10px 28px rgba(11,45,91,.18);max-height:0;overflow:hidden;visibility:hidden;
-  transform:translateY(24px);opacity:0;transition:max-height .3s ease,transform .3s ease,opacity .2s ease,visibility 0s linear .3s}
-.sheet[data-open="true"] .sheet-body{max-height:min(54vh,500px);overflow:auto;visibility:visible;transform:none;opacity:1;
-  transition:max-height .3s ease,transform .3s ease,opacity .2s ease}
-.sheet-body .hd{padding:9px 16px 6px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:1}
-.sheet-body .bd{padding:2px 16px 6px}
-.sheet-body .hd h2{font-size:16px!important}
-.sheet-body .hd .step{width:22px;height:22px;font-size:12px}
-.sheet-body #calc{display:none}
-.sheet-body .srow{padding:6px 0;row-gap:2px}
-.sheet-body .srow .txo{margin-top:0}
-.sheet-body .sum{margin-bottom:6px}
-.sheet-body .taxsel select{padding:4px 6px}
-.sheet-body .ft{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:12px}
-.sheet-body .ft .taxsel,.sheet-body .ft .msg{grid-column:1 / -1}
-.sheet-body .ft .sum{margin:0}
-.sheet-body .ft .btn.sec{padding:7px 12px}
-.sheet-body .ft{padding:8px 16px 10px;border-top:1px solid var(--line);background:var(--band)}
-.sheet-bar{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-bottom:0;
-  border-radius:14px 14px 0 0;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 16px rgba(11,45,91,.12)}
-.sheet[data-open="true"] .sheet-bar{border-radius:0;box-shadow:none}
-.sheet-toggle{flex:1;display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;cursor:pointer;padding:2px 0;min-width:0}
-.sheet-toggle .chev{width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;
-  font-size:12px;flex:none;transition:transform .25s ease}
-.sheet[data-open="true"] .sheet-toggle .chev{transform:rotate(180deg)}
+/* ---------- right drawer (step 3) ---------- */
+:root{--dw:400px}
+body{padding-bottom:84px;transition:padding-right .28s ease}
+body.drawer-open{padding-right:var(--dw)}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:var(--dw);max-width:100vw;z-index:40;background:#fff;border-left:1px solid var(--line);
+  box-shadow:-10px 0 28px rgba(11,45,91,.16);display:flex;flex-direction:column;transform:translateX(102%);visibility:hidden;
+  transition:transform .28s ease,visibility 0s linear .28s}
+.drawer[data-open="true"]{transform:none;visibility:visible;transition:transform .28s ease}
+.dr-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--line);
+  padding-top:calc(14px + env(safe-area-inset-top,0px))}
+.dr-hd h2{margin:0;font-size:18px}
+.dr-x{border:1.5px solid var(--navy);background:#fff;color:var(--navy);border-radius:999px;padding:7px 14px;font-weight:800;font-size:14px;cursor:pointer;white-space:nowrap}
+.dr-x:hover{background:var(--navy);color:#fff}
+.drawer .bd{flex:1;overflow:auto;padding:4px 16px 8px;max-height:none}
+.drawer{border-radius:0}
+.drawer .ft{border-radius:0}
+.drawer .ft{padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--band)}
+.drawer .srow{padding:8px 0}
+.launcher{position:fixed;right:16px;bottom:16px;z-index:35;display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);
+  border-radius:14px;padding:8px 10px 8px 12px;box-shadow:0 6px 22px rgba(11,45,91,.18);max-width:calc(100vw - 32px)}
+body.drawer-open .launcher{display:none}
+.sheet-toggle{display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;cursor:pointer;padding:2px 0;min-width:0}
+.sheet-toggle .chev{width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex:none}
 .sheet-toggle .info{font-size:15px;line-height:1.3}
 .sheet-toggle .info b{font-size:16px}
 .sheet-toggle .info small{display:block;font-size:12.5px;color:var(--sub)}
-.sheet-bar .btn.pri{flex:none;font-size:16px;padding:11px 22px}
+.launcher .btn.pri{flex:none;font-size:16px;padding:11px 20px}
+@media (max-width:1100px){ :root{--dw:360px} }
+@media (max-width:760px){
+  :root{--dw:100vw}
+  body.drawer-open{padding-right:0;overflow:hidden}
+  .launcher{left:10px;right:10px;bottom:10px;max-width:none;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+  .launcher .sheet-toggle{flex:1}
+}
 .sheet-toggle .info small.hint{color:#D92D20;font-size:13px}
 .sheet-toggle .info small.hint b{font-size:13px}
 .trlink{display:block;margin-top:4px;border:0;background:none;padding:0;color:#D92D20;font-weight:700;font-size:13px;cursor:pointer;text-align:left}
@@ -243,7 +243,6 @@ table.dtl .sfx{display:inline-block;width:3.4em;text-align:left;margin-left:3px;
   #etfCards{display:block}
 }
 @media (max-width:760px){
-  .sheet[data-open="true"] .sheet-body{max-height:58vh}
   body{font-size:16px}
   .wrap{padding:0 14px}
   header{padding:18px 0 16px}
@@ -416,8 +415,34 @@ tr.tot td{background:var(--band);border-top:2px solid var(--line)}
 </div></footer>
 
 <script>
-const CAT = {domestic:"국내주식", overseas:"해외주식", bond:"채권", commodity:"원자재", derivative:"파생", other:"기타"};
-const TYPES = [["domestic","국내주식"],["overseas","해외주식"],["bond","채권"],["etc","원자재·파생·기타"],["cc","커버드콜"]];
+/* asset classes (re-derived from the ETF name + SEIBro type; Naver's tab code alone mislabels e.g. REITs as 국내주식) */
+const KLASS = {eq_kr:"국내주식", eq_os:"해외주식", bond_kr:"국내채권", bond_os:"해외채권", mix:"채권혼합", reit:"리츠·부동산", cmdt:"원자재", lev:"레버리지·인버스", etc:"기타"};
+const TYPES = [["eq_kr","국내주식"],["eq_os","해외주식"],["bond_kr","국내채권"],["bond_os","해외채권"],["mix","채권혼합(50:50 등)"],["reit","리츠·부동산"],["cmdt","원자재"],["lev","레버리지·인버스"],["etc","기타"],["cc","커버드콜"]];
+const RX = {
+  mix:  /혼합|TRF\d|밸런스/,
+  lev:  /레버리지|인버스|2X/,
+  reit: /리츠|부동산/,
+  cmdt: /(골드|금은|은|원유|구리|농산물|금)\s?(선물|현물|실물)|국제금/,
+  fx:   /달러선물|엔선물|위안|통화/,
+  etc:  /TDF|자산배분|멀티에셋/,
+  bond: /국채|국고채|회사채|채권|금리|머니마켓|단기자금|KOFR|CD|SOFR|하이일드|통안|물가채|금융채|크레딧/,
+  ovs:  /미국|해외|글로벌|아시아|유로|신흥|중국|일본|인도|베트남|SOFR|하이일드|iShares|달러|S&P|나스닥|MSCI|테슬라|엔비디아|팔란티어|애플/
+};
+function klass(e){
+  if (e._k) return e._k;
+  const n = e.name, t = e.seibro_type || "";
+  let k;
+  if (RX.mix.test(n)) k = "mix";
+  else if (RX.lev.test(n) || /^파생상품\/(레버리지|인버스)/.test(t)) k = "lev";
+  else if (RX.reit.test(n)) k = "reit";
+  else if (/^상품/.test(t) || RX.cmdt.test(n)) k = "cmdt";
+  else if (/^통화/.test(t) || RX.fx.test(n) || RX.etc.test(n)) k = "etc";
+  else if (/^채권/.test(t) || e.cat === "bond" || RX.bond.test(n)) k = RX.ovs.test(n) ? "bond_os" : "bond_kr";
+  else if (e.cat === "overseas" || /^해외지수/.test(t) || RX.ovs.test(n)) k = "eq_os";
+  else if (e.cat === "domestic" || e.cat === "derivative") k = "eq_kr";
+  else k = "etc";
+  return e._k = k;
+}
 const FREQS = [["M","월"],["Q","분기"],["H","반기"],["Y","연"],["X","기타·불규칙"]];
 const SORTS = [["yield","분배율 높은순"],["ret","1년 수익률 높은순"],["aum","순자산 큰순"]];
 const PALETTE = ["#F37321","#0B2D5B","#3E7CB1","#E9A23B","#7A8FA6","#B5523B","#2E9C8F","#8C6BB1","#C9A227","#5B6475"];
@@ -455,7 +480,7 @@ function cycle(e){
   return e._cyc = c;
 }
 const CYC_TXT = {M:"월", Q:"분기", H:"반기", Y:"연", X:"불규칙"};
-function bucket(e){ return ["domestic","overseas","bond"].includes(e.cat) ? e.cat : "etc"; }
+function bucket(e){ return klass(e); }
 
 fetch("data/etf.json?v=" + Date.now()).then(r => { if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
   .then(js => { D = js; (document.fonts ? document.fonts.ready : Promise.resolve()).then(init); })
@@ -491,32 +516,33 @@ function init(){
       <p class="lead" id="listNote" style="margin-top:8px"></p>
     </section>
   </div>
-  <div class="sheet" id="sheet" data-open="false">
-    <div class="sheet-body" id="panel" role="region" aria-labelledby="h-sel">
-      <div class="hd"><h2 id="h-sel" style="font-size:19px;margin:0"><span class="step">3</span>담은 ETF와 비율</h2></div>
-      <div class="bd" id="selList"></div>
-      <div class="ft">
-        <label class="taxsel">국내주식형 과표 추정 기준
-          <select id="taxMode">
-            <option value="mkt">코스피200 실측 배당률 (기본)</option>
-            <option value="krx">KRX 평균 시가배당률 2.63%</option>
-            <option value="cap">분배금 전액 (가장 보수적)</option>
-          </select>
-        </label>
-        <div class="sum"><span>비율 합계</span><span id="wsum">0%</span></div>
-        <div class="btnrow">
-          <button class="btn sec" id="eq">균등 배분</button>
-          <button class="btn pri" id="calc" disabled>계산하기</button>
-        </div>
-        <div class="msg" id="msg"></div>
+  <aside class="drawer" id="sheet" data-open="false" aria-labelledby="h-sel" aria-hidden="true">
+    <div class="dr-hd">
+      <h2 id="h-sel"><span class="step">3</span>담은 ETF와 비율</h2>
+      <button class="dr-x" id="sheetClose" aria-label="패널 닫기">✕ 닫기</button>
+    </div>
+    <div class="bd" id="selList"></div>
+    <div class="ft" id="panel">
+      <label class="taxsel">국내주식형 과표 추정 기준
+        <select id="taxMode">
+          <option value="mkt">코스피200 실측 배당률 (기본)</option>
+          <option value="krx">KRX 평균 시가배당률 2.63%</option>
+          <option value="cap">분배금 전액 (가장 보수적)</option>
+        </select>
+      </label>
+      <div class="sum"><span>비율 합계</span><span id="wsum">0%</span></div>
+      <div class="btnrow">
+        <button class="btn sec" id="eq">균등 배분</button>
+        <button class="btn pri" id="calc" disabled>계산하기</button>
       </div>
+      <div class="msg" id="msg"></div>
     </div>
-    <div class="sheet-bar">
-      <button class="sheet-toggle" id="sheetToggle" aria-expanded="false" aria-controls="panel">
-        <span class="chev" aria-hidden="true">▲</span><span class="info" id="mbarInfo">ETF를 눌러 담아주세요</span>
-      </button>
-      <button class="btn pri" id="mbarCalc" disabled>계산하기</button>
-    </div>
+  </aside>
+  <div class="launcher" id="launcher">
+    <button class="sheet-toggle" id="sheetToggle" aria-expanded="false" aria-controls="sheet">
+      <span class="chev" aria-hidden="true">◀</span><span class="info" id="mbarInfo">ETF를 눌러 담아주세요</span>
+    </button>
+    <button class="btn pri" id="mbarCalc" disabled>계산하기</button>
   </div>
   <section id="result" hidden></section>
   <section class="notes" aria-labelledby="h-notes">
@@ -544,6 +570,7 @@ function init(){
   $("#taxMode").onchange = e => { taxMode = e.target.value; renderList(); if (!$("#result").hidden) calculate(); };
   $("#mbarCalc").onclick = calculate;
   $("#sheetToggle").onclick = () => setSheet($("#sheet").dataset.open !== "true");
+  $("#sheetClose").onclick = () => setSheet(false);
   document.addEventListener("keydown", e => { if (e.key === "Escape") setSheet(false); });
   renderControls(); renderList(); renderSel();
   if (readShare()){ sharedView = true; calculate(); sharedView = false; setTimeout(() => $("#result").scrollIntoView({block:"start"}), 300); }
@@ -593,9 +620,7 @@ const HIGH_YIELD_CUT = 0.06;
 const EQ_EXC = /리츠|부동산|인프라|채권|혼합|금리|머니마켓|CD|KOFR|단기|국채|회사채|TDF|TRF|달러|골드|금현물/;
 const HIGH_NAME = /고배당|금융|은행|증권|보험|배당다우존스|배당가치|주주환원/;
 let taxMode = "mkt";      // mkt | krx | cap
-function isDomEq(e){
-  return e.cat === "domestic" && !EQ_EXC.test(e.name) && !/^(해외지수|채권|통화|상품)/.test(e.seibro_type || "");
-}
+function isDomEq(e){ return klass(e) === "eq_kr"; }
 const ttmTax = e => { const asof = ymd(D.asof), st = new Date(asof); st.setFullYear(st.getFullYear()-1);
   const r = e.hist.filter(h => ymd(h[0]) > st && ymd(h[0]) <= asof); return (r.length && r.every(h => h[3] != null)) ? r.reduce((a,h) => a + h[3], 0) : null; };
 let _mkt, _high;
@@ -659,7 +684,7 @@ function renderList(){
       <td class="l"><span class="addbox">${selSet.has(e.code) ? "✓" : ""}</span></td>
       <td class="l rank">${i+1}</td>
       <td class="l nm">${esc(e.name)}${tagsHTML(e)}<small>${esc(e.code)} · ${esc(e.issuer)}</small></td>
-      <td class="l">${CAT[e.cat] || "기타"}</td>
+      <td class="l">${KLASS[klass(e)]}</td>
       <td>${won(e.price)}</td><td>${won(e.dist12)}</td>
       <td class="yld">${pctTxt(e.yield12)}</td><td>${retTxt(e.ret1y)}</td>
       <td>${CYC_TXT[cycle(e)]}</td><td>${taxCell(e)}</td>
@@ -668,7 +693,7 @@ function renderList(){
   $("#etfCards").innerHTML = top.map((e,i) => `
     <div class="ecard ${selSet.has(e.code) ? "sel" : ""}" data-c="${esc(e.code)}" role="button" tabindex="0" aria-pressed="${selSet.has(e.code)}">
       <div class="top"><span class="addbox">${selSet.has(e.code) ? "✓" : ""}</span>
-        <div class="t">${i+1}. ${esc(e.name)}${tagsHTML(e)}<small>${esc(e.code)} · ${esc(e.issuer)} · ${CAT[e.cat] || "기타"}</small></div></div>
+        <div class="t">${i+1}. ${esc(e.name)}${tagsHTML(e)}<small>${esc(e.code)} · ${esc(e.issuer)} · ${KLASS[klass(e)]}</small></div></div>
       <div class="mx">
         <div><span>분배율</span><b class="yld">${pctTxt(e.yield12)}</b></div>
         <div><span>1년(분배 포함)</span><b>${retTxt(e.ret1y)}</b></div>
@@ -686,8 +711,15 @@ function renderList(){
 function equalize(){ const n = state.sel.length; if (!n) return; const base = Math.floor(1000/n)/10; state.sel.forEach((s,i) => s.w = i === 0 ? +(100 - base*(n-1)).toFixed(1) : base); }
 function setSheet(open){
   const sh = $("#sheet"); if (!sh) return;
+  const was = sh.dataset.open === "true";
   sh.dataset.open = open ? "true" : "false";
+  sh.setAttribute("aria-hidden", open ? "false" : "true");
+  document.body.classList.toggle("drawer-open", !!open);
   $("#sheetToggle").setAttribute("aria-expanded", open ? "true" : "false");
+  if (was !== !!open){
+    /* inside the SJ Market Desk hub: fold its left menu while the panel is open, restore on close */
+    try { if (window.parent !== window) window.parent.postMessage({type: "sjdesk-panel", open: !!open}, location.origin); } catch(e) {}
+  }
 }
 function toggle(code){
   const i = state.sel.findIndex(s => s.code === code);
@@ -721,7 +753,7 @@ function updateSum(){
   const t = state.sel.reduce((a,s) => a + s.w, 0), ok = Math.abs(t - 100) < 0.05 && state.sel.length > 0;
   $("#wsum").innerHTML = ok ? `${t.toFixed(1)}%` : `<span class="bad">${t.toFixed(1)}% (100%로 맞춰주세요)</span>`;
   $("#calc").disabled = !ok; $("#mbarCalc").disabled = !ok; $("#msg").textContent = "";
-  $("#mbarInfo").innerHTML = state.sel.length ? `담은 ETF <b>${state.sel.length}개</b> · 비율 합계 ${ok ? `<b>${t.toFixed(1)}%</b>` : `<b style="color:var(--orange-ink)">${t.toFixed(1)}%</b>`}<small class="hint">▲ 눌러서 비율·<b>과표 수익률 직접 입력</b></small>` : "ETF를 눌러 담아주세요<small>목록에서 고르면 여기에 담깁니다</small>";
+  $("#mbarInfo").innerHTML = state.sel.length ? `담은 ETF <b>${state.sel.length}개</b> · 비율 합계 ${ok ? `<b>${t.toFixed(1)}%</b>` : `<b style="color:var(--orange-ink)">${t.toFixed(1)}%</b>`}<small class="hint">◀ 눌러서 비율·<b>과표 수익률 직접 입력</b></small>` : "ETF를 눌러 담아주세요<small>목록에서 고르면 여기에 담깁니다</small>";
 }
 
 /* ---------- projection ---------- */
