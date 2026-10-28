@@ -222,6 +222,10 @@ body{padding-bottom:86px}
 .sheet-toggle .info b{font-size:16px}
 .sheet-toggle .info small{display:block;font-size:12.5px;color:var(--sub)}
 .sheet-bar .btn.pri{flex:none;font-size:16px;padding:11px 22px}
+.sheet-toggle .info small.hint{color:#D92D20;font-size:13px}
+.sheet-toggle .info small.hint b{font-size:13px}
+.trlink{display:block;margin-top:4px;border:0;background:none;padding:0;color:#D92D20;font-weight:700;font-size:13px;cursor:pointer;text-align:left}
+.trlink:hover{text-decoration:underline}
 /* tablets: one column (the right panel squeezed the list in landscape) + bottom bar */
 @media (max-width:1199px){
   .grid{grid-template-columns:minmax(0,1fr)}
@@ -708,7 +712,7 @@ function updateSum(){
   const t = state.sel.reduce((a,s) => a + s.w, 0), ok = Math.abs(t - 100) < 0.05 && state.sel.length > 0;
   $("#wsum").innerHTML = ok ? `${t.toFixed(1)}%` : `<span class="bad">${t.toFixed(1)}% (100%로 맞춰주세요)</span>`;
   $("#calc").disabled = !ok; $("#mbarCalc").disabled = !ok; $("#msg").textContent = "";
-  $("#mbarInfo").innerHTML = state.sel.length ? `담은 ETF <b>${state.sel.length}개</b> · 비율 합계 ${ok ? `<b>${t.toFixed(1)}%</b>` : `<b style="color:var(--orange-ink)">${t.toFixed(1)}%</b>`}<small>눌러서 비율·과표 조정</small>` : "ETF를 눌러 담아주세요<small>목록에서 고르면 여기에 담깁니다</small>";
+  $("#mbarInfo").innerHTML = state.sel.length ? `담은 ETF <b>${state.sel.length}개</b> · 비율 합계 ${ok ? `<b>${t.toFixed(1)}%</b>` : `<b style="color:var(--orange-ink)">${t.toFixed(1)}%</b>`}<small class="hint">▲ 눌러서 비율·<b>과표 수익률 직접 입력</b></small>` : "ETF를 눌러 담아주세요<small>목록에서 고르면 여기에 담깁니다</small>";
 }
 
 /* ---------- projection ---------- */
@@ -857,7 +861,7 @@ function calculate(){
           <td data-label="실제 매수액">${won(it.invested)}</td><td data-label="분배율(12개월)">${pctTxt(it.e.yield12)}</td>
           <td data-label="예상 분배금(세전)"><b>${won(g)}</b><small class="sub2 r">${fs.length}회</small></td>
           <td data-label="예상 과표"><b>${won(tx)}</b><small class="sub2 r">분배금의 ${g ? Math.round(tx/g*100) : 0}%</small></td>
-          <td class="l basiscell" data-label="과표 근거">${taxBasisText(it, fs)}</td></tr>`; }).join("")}
+          <td class="l basiscell" data-label="과표 근거">${taxBasisText(it, fs)}<button class="trlink" data-c="${esc(it.e.code)}">✎ 과표 수익률 직접 입력</button></td></tr>`; }).join("")}
         <tr class="tot"><td class="l first" data-label="합계"><b>합계</b></td><td data-label="비율"><b>${state.sel.reduce((a,s)=>a+s.w,0).toFixed(1)}%</b></td><td class="hide-m"></td>
           <td data-label="실제 매수액"><b>${won(invested)}</b></td><td data-label="가중 분배율"><b>${rate(G, invested)}</b></td><td data-label="예상 분배금(세전)"><b>${won(G)}</b></td><td data-label="예상 과표"><b>${won(T)}</b><small class="sub2 r">분배금의 ${G ? Math.round(T/G*100) : 0}%</small></td><td class="hide-m"></td></tr>
       </tbody></table></div>
@@ -914,6 +918,11 @@ function calculate(){
   $("#custName").value = prevCust; $("#author").value = prevAuthor; $("#withDetail").checked = prevDetail; refreshPrintHead();
   $("#btnPdf").onclick = () => { buildReport(); setTimeout(() => window.print(), 80); };
   $("#btnShare").onclick = share;
+  R.querySelectorAll(".trlink").forEach(b => b.onclick = () => {
+    setSheet(true);
+    const inp = $("#tr-" + b.dataset.c);
+    if (inp){ setTimeout(() => { inp.scrollIntoView({block:"center"}); inp.focus(); }, 320); }
+  });
   ["#custName","#author"].forEach(sel => $(sel).addEventListener("input", refreshPrintHead));
   if (chart) chart.destroy();
   const mobile = matchMedia("(max-width:760px)").matches;
