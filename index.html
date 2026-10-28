@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ETF 분배금 계산기 — 국내 상장 ETF 12개월 분배금·과표</title>
+<title>ETF 분배금 플래너 — 국내 상장 ETF 12개월 분배금·과표</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230B2D5B'/><circle cx='50' cy='52' r='26' fill='none' stroke='%23F37321' stroke-width='9'/><text x='50' y='63' font-size='30' font-weight='800' font-family='Arial' fill='%23F37321' text-anchor='middle'>₩</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -404,7 +404,7 @@ tr.tot td{background:var(--band);border-top:2px solid var(--line)}
 <body>
 <header>
   <div class="wrap">
-    <h1>ETF 분배금 계산기</h1>
+    <h1>ETF 분배금 플래너</h1>
     <p>국내 상장 ETF를 골라 비율을 넣으면 향후 12개월 분배금 입금 일정과 과세표준(과표)을 추정합니다.</p>
     <div class="meta">
       <span>데이터 기준 <b id="asof">—</b></span>
@@ -899,7 +899,7 @@ function calculate(){
   const R = $("#result"); R.hidden = false;
   R.innerHTML = `
     <div class="print-head">
-      <div class="ph-t">ETF 분배금 시뮬레이션</div>
+      <div class="ph-t">ETF 분배금 플래너</div>
       <div class="ph-m"></div>
     </div>
     <div class="rhead">
@@ -995,7 +995,15 @@ function calculate(){
     <div class="print-foot">본 자료는 공개 데이터(SEIBro 분배 내역, 네이버 금융 시세, FunETF 과세표준)를 바탕으로 한 <b>추정 시뮬레이션</b>이며 투자 권유가 아닙니다. 미래 분배금은 최근 지급 실적을 이어 붙인 추정치로 실제와 다를 수 있습니다. 과표 ‘추정’은 국내주식형에 현재가 × 국내 증시 평균배당률을 적용한 값, ‘상한’은 운용사 미공개로 분배금 전액을 과표로 본 값입니다. 원천징수 15.4%는 일반 과세계좌 기준이며, 금융소득종합과세 여부는 다른 금융소득을 합산해 판단해야 합니다.</div>`;
 
   $("#custName").value = prevCust; $("#author").value = prevAuthor; $("#withDetail").checked = prevDetail; refreshPrintHead();
-  $("#btnPdf").onclick = () => { buildReport(); setTimeout(() => window.print(), 80); };
+  $("#btnPdf").onclick = () => {
+    buildReport();
+    /* the saved PDF file name follows the document title */
+    const t0 = document.title, cust = ($("#custName")?.value || "").trim();
+    document.title = `ETF 분배금 플래너${cust ? "_" + cust : ""}_${key(new Date())}`;
+    const back = () => { document.title = t0; window.removeEventListener("afterprint", back); };
+    window.addEventListener("afterprint", back);
+    setTimeout(() => window.print(), 80);
+  };
   $("#btnShare").onclick = share;
   R.querySelectorAll(".trlink").forEach(b => b.onclick = () => {
     setSheet(true);
@@ -1052,7 +1060,7 @@ function buildReport(){
   const metaRows = [cust ? ["고객", esc(cust)] : null, ["작성일", fmtD(new Date())], ["데이터 기준일", fmtD(r.asof)], author ? ["작성", esc(author)] : null].filter(Boolean);
   box.innerHTML = `<div class="rp">
     <div class="rp-head">
-      <div><div class="rp-t">ETF 분배금 시뮬레이션</div><div class="rp-s">국내 상장 ETF · 향후 12개월 분배금 및 과세표준 추정</div></div>
+      <div><div class="rp-t">ETF 분배금 플래너</div><div class="rp-s">국내 상장 ETF · 향후 12개월 분배금 및 과세표준 추정</div></div>
       <table class="rp-meta">${metaRows.map(([k,v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</table>
     </div>
 
@@ -1119,7 +1127,7 @@ function shareURL(){
 async function share(){
   const url = shareURL(), msg = $("#shareMsg");
   if (navigator.share && matchMedia("(max-width:760px)").matches){
-    try { await navigator.share({title:"ETF 분배금 시뮬레이션", text:`투자 원금 ${man(lastCalc.total)} ETF 분배금 시뮬레이션`, url}); return; } catch(e){ if (e.name === "AbortError") return; }
+    try { await navigator.share({title:"ETF 분배금 플래너", text:`투자 원금 ${man(lastCalc.total)} · ETF 분배금 플래너`, url}); return; } catch(e){ if (e.name === "AbortError") return; }
   }
   try { await navigator.clipboard.writeText(url); msg.textContent = "링크를 복사했습니다. 카카오톡·이메일에 붙여넣으세요."; }
   catch(e){ window.prompt("아래 링크를 복사하세요", url); }
