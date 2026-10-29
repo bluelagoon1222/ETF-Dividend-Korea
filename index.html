@@ -328,6 +328,17 @@ table.dtl .sfx{display:inline-block;width:3.4em;text-align:left;margin-left:3px;
 
 /* result header, conditions, actions */
 .rhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.sharewrap{position:relative}
+.sharemenu{position:absolute;right:0;top:calc(100% + 6px);z-index:25;background:#fff;border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 10px 28px rgba(11,45,91,.18);padding:6px;min-width:270px}
+.sharemenu button{display:grid;grid-template-columns:30px 1fr;align-items:center;width:100%;border:0;background:none;text-align:left;
+  padding:9px 10px;border-radius:8px;cursor:pointer;font-size:15px;font-weight:700;color:var(--ink)}
+.sharemenu button span{grid-row:1 / 3;font-size:19px}
+.sharemenu button small{grid-column:2;font-size:12px;font-weight:400;color:var(--sub)}
+.sharemenu button:hover{background:var(--band)}
+.sharemenu .sm-native{background:#FFF6EF}
+.sharemenu button[hidden]{display:none}
+@media (max-width:760px){ .sharewrap{flex:1} .sharewrap #btnShare{width:100%} .sharemenu{left:0;right:auto;min-width:0;width:min(320px,calc(100vw - 28px))} }
 .actions{display:flex;gap:8px}
 .btn.act{background:var(--navy);color:#fff;font-size:15px;padding:10px 16px}
 .btn.act.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
@@ -937,7 +948,15 @@ function calculate(){
       <h2><span class="step">4</span>향후 12개월 예상 결과</h2>
       <div class="actions">
         <button class="btn act" id="btnPdf">PDF로 저장 (A4)</button>
-        <button class="btn act ghost" id="btnShare">공유 링크</button>
+        <div class="sharewrap">
+          <button class="btn act ghost" id="btnShare" aria-haspopup="true" aria-expanded="false">공유하기 ▾</button>
+          <div class="sharemenu" id="shareMenu" hidden>
+            <button data-s="native" class="sm-native"><span>📲</span>앱으로 공유<small>카카오톡·메일·문자 등 기기 공유창</small></button>
+            <button data-s="mail"><span>✉️</span>이메일로 보내기<small>결과 요약 + 링크가 본문에 들어감</small></button>
+            <button data-s="sms" class="sm-sms"><span>💬</span>문자로 보내기<small>휴대폰 문자 앱 열기</small></button>
+            <button data-s="copy"><span>🔗</span>링크 복사<small>원하는 곳에 붙여넣기</small></button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="actions2">
@@ -1036,6 +1055,9 @@ function calculate(){
     setTimeout(() => window.print(), 80);
   };
   $("#btnShare").onclick = share;
+  $("#shareMenu").querySelectorAll("button[data-s]").forEach(b => b.onclick = () => doShare(b.dataset.s));
+  if (!window._shareDoc){ window._shareDoc = true;
+    document.addEventListener("click", ev => { const w = document.querySelector(".sharewrap"); if (w && !w.contains(ev.target) && $("#shareMenu")) toggleShareMenu(false); }); }
   R.querySelectorAll(".trlink").forEach(b => b.onclick = () => {
     setSheet(true);
     const inp = $("#tr-" + b.dataset.c);
@@ -1199,12 +1221,41 @@ function shareURL(){
   const p = lastCalc.sel.map(s => `${s.code}:${s.w}${s.tr != null ? ":" + s.tr : ""}`).join(",");
   return `${location.origin}${location.pathname}#a=${lastCalc.total}&p=${encodeURIComponent(p)}`;
 }
-async function share(){
-  const url = shareURL(), msg = $("#shareMsg");
-  if (navigator.share && matchMedia("(max-width:760px)").matches){
-    try { await navigator.share({title:"ETF 분배금 플래너", text:`투자 원금 ${man(lastCalc.total)} · ETF 분배금 플래너`, url}); return; } catch(e){ if (e.name === "AbortError") return; }
+/* share: device share sheet when available, plus e-mail / SMS / copy fallbacks */
+function shareText(){
+  const r = lastResult;
+  const lines = [`[ETF 분배금 플래너] 투자 원금 ${man(lastCalc.total)} 시뮬레이션 (데이터 기준일 ${fmtD(r.asof)})`];
+  r.items.forEach(it => lines.push(`· ${it.e.name} ${(+it.w).toFixed(1)}%`));
+  lines.push(`향후 12개월 예상(추정) 세전 분배금 ${won(r.G)} / 세후 ${won(r.N)} / 과표 ${won(r.T)}`);
+  lines.push("※ 공개 데이터 기반 추정치이며 투자 권유가 아닙니다.");
+  return lines.join("\n");
+}
+function share(){ toggleShareMenu(); }
+function toggleShareMenu(force){
+  const m = $("#shareMenu"), b = $("#btnShare"), open = force ?? m.hidden;
+  m.hidden = !open; b.setAttribute("aria-expanded", open ? "true" : "false");
+  if (open){
+    m.querySelector(".sm-native").hidden = !navigator.share;
+    m.querySelector(".sm-sms").hidden = !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   }
-  try { await navigator.clipboard.writeText(url); msg.textContent = "링크를 복사했습니다. 카카오톡·이메일에 붙여넣으세요."; }
+}
+async function doShare(kind){
+  const url = shareURL(), msg = $("#shareMsg"), text = shareText(), title = "ETF 분배금 플래너";
+  toggleShareMenu(false);
+  if (kind === "native"){
+    try { await navigator.share({title, text, url}); } catch(e){ if (e.name !== "AbortError") msg.textContent = "이 기기에서는 앱 공유를 사용할 수 없습니다. 이메일 또는 링크 복사를 이용해 주세요."; }
+    return;
+  }
+  if (kind === "mail"){
+    location.href = `mailto:?subject=${encodeURIComponent(title + " – 투자 원금 " + man(lastCalc.total))}&body=${encodeURIComponent(text + "\n\n" + url)}`;
+    return;
+  }
+  if (kind === "sms"){
+    const sep = /iPhone|iPad|iPod/i.test(navigator.userAgent) ? "&" : "?";
+    location.href = `sms:${sep}body=${encodeURIComponent(text + "\n" + url)}`;
+    return;
+  }
+  try { await navigator.clipboard.writeText(url); msg.textContent = "링크를 복사했습니다. 원하는 곳에 붙여넣으세요."; }
   catch(e){ window.prompt("아래 링크를 복사하세요", url); }
 }
 function readShare(){
