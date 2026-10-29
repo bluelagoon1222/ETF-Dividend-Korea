@@ -239,6 +239,27 @@ table.comp td:not(.l),table.msum td:not(.l),table.dtl td:not(.l){white-space:now
 table.dtl .sfx{display:inline-block;width:3.4em;text-align:left;margin-left:3px;font-size:11.5px;color:#98A2B3}
 .cards .card .v,.cards .card .r,.cards .card .s{text-align:right;font-variant-numeric:tabular-nums}
 .cinfo dd{font-variant-numeric:tabular-nums}
+/* ---------- filter buttons: look clickable (raised buttons with a check/radio mark) ---------- */
+.fgroup .chip{border:1.5px solid #C7CDD6;background:#fff;color:var(--ink);font-weight:700;font-size:15px;padding:8px 15px;
+  border-radius:10px;box-shadow:0 2px 0 #DDE2E9;cursor:pointer;transition:transform .08s ease,box-shadow .08s ease,border-color .12s}
+.fgroup .chip:hover{border-color:var(--navy);transform:translateY(-1px);box-shadow:0 3px 0 #C9D2DE}
+.fgroup .chip:active{transform:translateY(1px);box-shadow:0 1px 0 #DDE2E9}
+.fgroup .chip.sort::before{content:"○ ";color:#98A2B3}
+.fgroup .chip.sort[aria-pressed="true"]{background:var(--orange);border-color:var(--orange);color:#fff;box-shadow:0 2px 0 #C95A12}
+.fgroup .chip.sort[aria-pressed="true"]::before{content:"● ";color:#fff}
+.fgroup .chip.grp::before,.fgroup .chip.ms::before{content:"＋ ";color:#98A2B3;font-weight:800}
+.fgroup .chip.grp[aria-pressed="true"],.fgroup .chip.ms[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 2px 0 #051A38}
+.fgroup .chip.grp[aria-pressed="true"]::before,.fgroup .chip.ms[aria-pressed="true"]::before{content:"✓ ";color:#fff}
+.fgroup .seg{border:0;padding:0;gap:4px;background:none}
+.fgroup .seg .chip{border:1.5px solid #C7CDD6;padding:8px 13px}
+.fgroup .seg .chip.sub{font-size:14px;color:var(--sub);background:#F7F8FA;padding:8px 11px}
+.fgroup .seg .chip.sub[aria-pressed="true"]{background:var(--orange);border-color:var(--orange);color:#fff;box-shadow:0 2px 0 #C95A12}
+.fgroup .seg.on .chip.sub:not([aria-pressed="true"]){border-color:#9FB2CC}
+.fgroup .chip.reset{box-shadow:none;border-style:dashed;color:var(--sub);font-weight:400}
+.fgroup .check{font-weight:700;color:var(--ink)}
+.fgroup .check input{width:18px;height:18px;accent-color:var(--orange)}
+
+@media (max-width:760px){ .fgroup .chip{font-size:14px;padding:7px 11px} .fgroup .seg .chip.sub{padding:7px 9px} }
 /* tablets: one column (the right panel squeezed the list in landscape) + bottom bar */
 @media (max-width:1199px){
   .grid{grid-template-columns:minmax(0,1fr)}
@@ -348,6 +369,16 @@ tr.tot td{background:var(--band);border-top:2px solid var(--line)}
   .two{grid-template-columns:1fr}
   table.comp tr.tot{background:var(--band)}
 }
+/* paginated report */
+.rp-page{height:277mm;display:flex;flex-direction:column;overflow:hidden;break-after:page;page-break-after:always}
+.rp-page:last-child{break-after:auto;page-break-after:auto}
+.rp .rsec{padding-top:9px}
+.rp .rsec.rsec-top{padding-top:0}
+.rp .rsec > h3:first-child{margin-top:0}
+.rp-run{font-size:7.5pt;color:#A3ACBB;border-bottom:1px solid #E3E6EB;padding-bottom:3px;margin-bottom:2px}
+.rp-foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-size:7.5pt;color:#B4BCC8;padding-top:4px}
+.rp-foot .cont{font-style:italic;letter-spacing:.2px}
+.rp .chart img{aspect-ratio:1000/470;height:auto}
 /* ---------- print report (separate layout used only for PDF) ---------- */
 #printReport{display:none}
 @media print{
@@ -1058,20 +1089,21 @@ function buildReport(){
     return {it, g: fs.reduce((a,f)=>a+f.gross,0), tx: fs.reduce((a,f)=>a+f.taxable,0), n: fs.length}; });
   const basisTxt = t => t.kind === "공시" ? `운용사 공시 ${Math.round(t.ratio*100)}%` : t.kind === "추정" ? `배당률 ${(t.rate*100).toFixed(2)}% 기준 추정` : t.kind === "일반" ? "일반 국내주식형 전액" : "미공개 → 전액(상한)";
   const metaRows = [cust ? ["고객", esc(cust)] : null, ["작성일", fmtD(new Date())], ["데이터 기준일", fmtD(r.asof)], author ? ["작성", esc(author)] : null].filter(Boolean);
-  box.innerHTML = `<div class="rp">
-    <div class="rp-head">
+  const detailRow = f => `<tr><td class="l nw">${fmtD(f.ev.pay)} <span class="code" style="font-size:6.6pt">(${r.BASIS[f.ev.basis]})</span></td><td class="l"><span class="dot" style="background:${f.it.color}"></span>${esc(f.it.e.name)}</td><td class="nw"><b>${won(f.net)}</b></td>
+        <td class="nw s">${won(f.ev.amt)}</td><td class="nw s">${f.it.qty.toLocaleString("ko-KR")}</td><td class="nw s">${won(f.gross)}</td><td class="nw s">${won(f.taxable)}<span class="sfx">${f.tb === "상한" ? "*" : ""}</span></td><td class="nw s">${won(f.wh)}</td></tr>`;
+  const sec = html => `<div class="rsec">${html}</div>`;
+  const parts = [
+    {html: `<div class="rsec rsec-top"><div class="rp-head">
       <div><div class="rp-t">ETF 분배금 플래너</div><div class="rp-s">국내 상장 ETF · 향후 12개월 분배금 및 과세표준 추정</div></div>
       <table class="rp-meta">${metaRows.map(([k,v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</table>
-    </div>
-
-    <h3>1. 시뮬레이션 조건</h3>
+    </div></div>`},
+    {html: sec(`<h3>1. 시뮬레이션 조건</h3>
     <table class="t kv"><tbody>
       <tr><th>투자 원금</th><td class="big">${man(r.total)}<small>${won(r.total)}</small></td><th>실제 매수액</th><td>${won(r.invested)}<small>미매수 잔액(현금) ${won(r.total - r.invested)}</small></td></tr>
       <tr><th>매수 가정 시점</th><td>${fmtD(r.asof)} 현재가</td><th>분배금 계산 기간</th><td>${fmtD(r.asof)} ~ ${fmtD(r.end)}</td></tr>
       <tr><th>과표 추정 기준</th><td colspan="3" class="l">${MODE_TXT()} (국내주식형 커버드콜·고분배 ETF에 적용)</td></tr>
-    </tbody></table>
-
-    <h3>2. 예상 결과 요약 (향후 12개월, 추정)</h3>
+    </tbody></table>`)},
+    {html: sec(`<h3>2. 예상 결과 요약 (향후 12개월, 추정)</h3>
     <table class="t s4">
       <thead><tr><th class="rowh l">구분</th><th>세전 분배금</th><th>과표 합계</th><th>원천징수 (15.4%)</th><th>세후 수령액</th></tr></thead>
       <tbody>
@@ -1081,9 +1113,8 @@ function buildReport(){
         <tr><th class="rowh l">월평균</th><td>${won(r.G/12)}</td><td>—</td><td>—</td><td>${won(r.N/12)}</td></tr>
         <tr class="tot cmp"><th class="rowh l">종합과세 기준</th><td colspan="4" class="l">연 금융소득 2,000만원 대비 이 포트폴리오 과표 ${man(r.T)} → ${over ? `<span class="warn">기준 초과 ${man(r.T - COMP_LIMIT)}</span>` : `<span class="ok">기준까지 ${man(COMP_LIMIT - r.T)} 여유</span>`} (예금 이자 등 다른 금융소득 합산 필요)</td></tr>
       </tbody>
-    </table>
-
-    <h3>3. 구성 ETF</h3>
+    </table>`)},
+    {html: sec(`<h3>3. 구성 ETF</h3>
     <table class="t">
       <colgroup><col style="width:26%"><col style="width:7%"><col style="width:8%"><col style="width:13%"><col style="width:8%"><col style="width:12.5%"><col style="width:11.5%"><col style="width:14%"></colgroup>
       <thead><tr><th class="l">ETF</th><th>비율</th><th>수량</th><th>매수액</th><th>분배율<br>(12개월)</th><th>예상 분배금<br>(세전)</th><th>예상 과표</th><th class="l">과표 근거</th></tr></thead>
@@ -1092,9 +1123,8 @@ function buildReport(){
           <td><b>${won(c.g)}</b></td><td><b>${won(c.tx)}</b></td><td class="l">${taxBasisText(c.it, r.flows.filter(f => f.it === c.it))}</td></tr>`).join("")}
         <tr class="tot"><td class="l">합계</td><td class="nw">${r.items.reduce((a,i)=>a+i.w,0).toFixed(1)}%</td><td></td><td class="nw">${won(r.invested)}</td><td>${pct(r.G, r.invested)}</td><td>${won(r.G)}</td><td>${won(r.T)}</td><td class="l">과표/분배금 ${pct(r.T, r.G)}</td></tr>
       </tbody>
-    </table>
-
-    <h3>4. 월별 입금 예상 (지급 예정월 기준)</h3>
+    </table>`)},
+    {html: sec(`<h3>4. 월별 입금 예상 (지급 예정월 기준)</h3>
     <div class="two">
       <div class="chart"><img src="${reportChart(r)}" alt="월별 분배금 차트"></div>
       <table class="t m">
@@ -1103,20 +1133,65 @@ function buildReport(){
         <tbody>${r.monthRows.map(m => `<tr><td class="l"><b>${m.m.slice(2,4)}.${m.m.slice(4)}</b></td><td class="l">${m.names.map(it => `<span class="dot" style="background:${it.color}"></span>`).join("")}</td><td>${won(m.g)}</td><td><b>${won(m.n)}</b></td></tr>`).join("")}
           <tr class="tot"><td class="l" colspan="2">합계</td><td>${won(r.G)}</td><td>${won(r.N)}</td></tr></tbody>
       </table>
-    </div>
-
-    <div class="note">본 자료는 공개 데이터(SEIBro 분배 내역, 네이버 금융 시세, FunETF 과세표준)를 바탕으로 한 <b>추정 시뮬레이션</b>이며 투자 권유가 아닙니다. 미래 분배금은 최근 지급 실적을 이어 붙인 추정치(커버드콜은 최근 3회 평균)로 실제와 다를 수 있습니다. 과표 ‘상한’은 운용사 미공개로 분배금 전액을 과표로 본 값입니다. 원천징수 15.4%는 일반 과세계좌 기준입니다.</div>
-
-    ${withDetail ? `<h3 class="pb">5. 회차별 상세 입금표</h3>
-    <table class="t m dt">
+    </div>`)},
+    {html: sec(`<div class="note">본 자료는 공개 데이터(SEIBro 분배 내역, 네이버 금융 시세, FunETF 과세표준)를 바탕으로 한 <b>추정 시뮬레이션</b>이며 투자 권유가 아닙니다. 미래 분배금은 최근 지급 실적을 이어 붙인 추정치(커버드콜은 최근 3회 평균)로 실제와 다를 수 있습니다. 과표 ‘상한’은 운용사 미공개로 분배금 전액을 과표로 본 값입니다. 원천징수 15.4%는 일반 과세계좌 기준입니다.</div>`)}
+  ];
+  const detailHead = `<table class="t m dt"><table class="t m dt">
       <colgroup><col style="width:23%"><col style="width:23%"><col style="width:11%"><col style="width:7.5%"><col style="width:6.5%"><col style="width:10.5%"><col style="width:10.5%"><col style="width:8%"></colgroup>
       <thead><tr><th class="l">지급 예정일 (근거)</th><th class="l">ETF</th><th>세후</th><th class="s">주당</th><th class="s">수량</th><th class="s">세전</th><th class="s">과표</th><th class="s nw">원천징수</th></tr></thead>
-      <tbody>${r.flows.map(f => `<tr><td class="l nw">${fmtD(f.ev.pay)} <span class="code" style="font-size:6.6pt">(${r.BASIS[f.ev.basis]})</span></td><td class="l"><span class="dot" style="background:${f.it.color}"></span>${esc(f.it.e.name)}</td><td class="nw"><b>${won(f.net)}</b></td>
-        <td class="nw s">${won(f.ev.amt)}</td><td class="nw s">${f.it.qty.toLocaleString("ko-KR")}</td><td class="nw s">${won(f.gross)}</td><td class="nw s">${won(f.taxable)}<span class="sfx">${f.tb === "상한" ? "*" : ""}</span></td><td class="nw s">${won(f.wh)}</td></tr>`).join("")}
-        <tr class="tot"><td class="l" colspan="2">합계 (${r.flows.length}회) · 과표 옆 * 는 분배금 전액(상한)</td><td class="nw">${won(r.N)}</td><td></td><td></td><td class="nw">${won(r.G)}</td><td class="nw">${won(r.T)}</td><td class="nw">${won(r.W)}</td></tr></tbody>
-    </table>` : ""}
-  </div>`;
+      <tbody>`;
+  const detailTot = `<tr class="tot"><td class="l" colspan="2">합계 (${r.flows.length}회) · 과표 옆 * 는 분배금 전액(상한)</td><td class="nw">${won(r.N)}</td><td></td><td></td><td class="nw">${won(r.G)}</td><td class="nw">${won(r.T)}</td><td class="nw">${won(r.W)}</td></tr>`;
+  box.innerHTML = paginateReport(parts, withDetail ? {rows: r.flows.map(detailRow), head: detailHead, tot: detailTot} : null,
+    {cust, asof: fmtD(r.asof)});
   box.dataset.fresh = "1";
+}
+
+/* ---------- A4 pagination: a numbered section never splits; it moves to the next page whole.
+   Pages that end early get a faint "continued" line. Long detail tables split between rows
+   with the header repeated. ---------- */
+function paginateReport(parts, detail, meta){
+  const MM = 96 / 25.4;                           // px per mm
+  const PAGE_H = 276 * MM;                        // printable height (297 - margins) with a little slack
+  const FOOT_H = 7 * MM;                          // "continued" line + page number
+  const RUN_H = 7 * MM;                           // running header on pages 2+
+  const meas = document.createElement("div");
+  meas.className = "rp"; meas.style.cssText = "position:absolute;left:-10000px;top:0;width:190mm;visibility:hidden";
+  document.body.appendChild(meas);
+  const h = html => { meas.innerHTML = html; return meas.firstElementChild.getBoundingClientRect().height; };
+  const pages = [[]]; let used = 0;
+  const cap = () => PAGE_H - FOOT_H - (pages.length > 1 ? RUN_H : 0);
+  const push = (html, height) => {
+    if (used > 0 && used + height > cap()){ pages.push([]); used = 0; }
+    pages[pages.length-1].push(html); used += height;
+  };
+  parts.forEach(pt => push(pt.html, h(pt.html)));
+  if (detail){
+    /* measure header block and every row, then fill pages row by row */
+    const title = n => `<h3>5. 회차별 상세 입금표${n ? " (계속)" : ""}</h3>`;
+    meas.innerHTML = `<div class="rsec">${title(0)}${detail.head}${detail.rows.join("")}${detail.tot}</tbody></table></div>`;
+    const blk = meas.firstElementChild, trs = [...blk.querySelectorAll("tbody tr")];
+    const headH = blk.getBoundingClientRect().height - trs.reduce((a,t) => a + t.getBoundingClientRect().height, 0);
+    const rowH = trs.map(t => t.getBoundingClientRect().height);
+    const all = detail.rows.concat([detail.tot]);
+    let k = 0, chunk = 0;
+    while (k < all.length){
+      let room = cap() - used - headH, take = 0, sum = 0;
+      while (k + take < all.length && sum + rowH[k + take] <= room){ sum += rowH[k + take]; take++; }
+      if (take < Math.min(3, all.length - k) && used > 0){ pages.push([]); used = 0; continue; }   // too little room: start fresh
+      if (take === 0){ take = 1; sum = rowH[k]; }
+      const html = `<div class="rsec">${title(chunk)}${detail.head}${all.slice(k, k + take).join("")}</tbody></table></div>`;
+      pages[pages.length-1].push(html); used += headH + sum;
+      k += take; chunk++;
+      if (k < all.length){ pages.push([]); used = 0; }
+    }
+  }
+  meas.remove();
+  const n = pages.length;
+  return pages.map((pg, i) => `<div class="rp rp-page">
+      ${i > 0 ? `<div class="rp-run">ETF 분배금 플래너${meta.cust ? " · " + esc(meta.cust) : ""} · 데이터 기준일 ${meta.asof}</div>` : ""}
+      ${pg.join("")}
+      <div class="rp-foot">${i < n - 1 ? `<span class="cont">다음 페이지에 이어집니다 ›</span>` : "<span></span>"}<span class="pno">${i + 1} / ${n}</span></div>
+    </div>`).join("");
 }
 
 /* share link: amount + ETF codes + weights only (no customer data) */
